@@ -1,10 +1,10 @@
 import { config } from './config.js';
 import { addMarketBars, marketBarIndex, newsMute } from './filters.js';
 
-export function newLevel({ pair, tf, candle, dir, setup, internal, external, session }) {
+export function newLevel({ pair, tf, candle, dir, setup, internal, external, session, num }) {
   const close = candle.time + tf;
   return {
-    id: `${pair}:${candle.time}:${dir}`,
+    id: `${pair}:${candle.time}:${dir}`, num,
     pair, tf, dir, candleOpen: candle.time, level: candle.open, formedClose: close,
     windowStart: close, deadline: addMarketBars(close, config.tapWindowCandles, tf),
     setup, internal, external, session, status: 'active', upgrades: [],

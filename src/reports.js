@@ -1,5 +1,6 @@
 import { config, TF_LABEL } from './config.js';
 import { localParts } from './filters.js';
+import { tag } from './telegram.js';
 
 export function checkinDue(state, now) {
   const p = localParts(now, config.displayZone);
@@ -25,12 +26,20 @@ export function recapStats(results) {
   return [...groups].map(([key, g]) => ({ key, ...g, rate: rate(g) }));
 }
 
-export function recapText(results, alertCount) {
+export function recapText(results, alertCount, reported = []) {
   const lines = [`📊 <b>Weekly recap</b> — ${alertCount} setup alert(s)`];
+  if (reported.length) {
+    const tp = reported.filter((l) => l.reported === 'TP').length, sl = reported.length - tp;
+    lines.push('', `<b>Your trades</b>: ${tp} TP / ${sl} SL (${Math.round((100 * tp) / reported.length)}%)`);
+    for (const l of [...reported].sort((a, b) => a.num - b.num)) {
+      lines.push(`${l.reported === 'TP' ? '✅' : '❌'} ${tag(l.num)} ${l.pair.split(':').pop()} ${TF_LABEL[l.tf]} ${l.dir === 'bull' ? 'BUY' : 'SELL'}`);
+    }
+    lines.push('', '<b>Bot tracking</b> (exact 1:1 levels):');
+  }
   for (const g of recapStats(results)) {
     lines.push(`${g.key}: ${g.won}W / ${g.lost}L${g.rate !== null ? ` (${g.rate}%)` : ''}`
       + `${g.unknown ? ` · ${g.unknown} unknown` : ''}${g.muted ? ` · ${g.muted} muted by news` : ''}`);
   }
-  if (lines.length === 1) lines.push('No tapped trades this week.');
+  if (!results.length) lines.push('No tapped trades this week.');
   return lines.join('\n');
 }

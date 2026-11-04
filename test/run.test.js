@@ -28,6 +28,8 @@ test('valid bullish no-wick in London forms a level and an alert', () => {
   const { events } = processPair(state, PAIR, trendData(nw), nw + 960, noNews);
   assert.deepEqual(events.map((e) => e.kind), ['formed']);
   assert.equal(state.levels[0].level, 0.7032);
+  assert.equal(state.levels[0].num, 1);
+  assert.equal(state.nextNum, 2);
   assert.equal(state.pairs[PAIR].last15, nw + 900);
 });
 
@@ -83,6 +85,7 @@ function fakeCandles(now) {
   };
 }
 const okNews = async () => ({ ok: true, text: async () => '[]' });
+const noUpdates = { ok: true, status: 200, json: async () => ({ ok: true, result: [] }) };
 
 function setupRun(now, mutate) {
   const dir = mkdtempSync(join(tmpdir(), 'nowick-run-'));
@@ -109,6 +112,7 @@ test('Telegram 5xx: state (sent IDs, progress) is written before the failing exi
   let n = 0;
   const fetchFn = async (url) => {
     if (!String(url).includes('telegram')) return okNews();
+    if (String(url).includes('getUpdates')) return noUpdates;
     n++;
     return { ok: n === 1, status: n === 1 ? 200 : 502, json: async () => ({}) };
   };
@@ -125,6 +129,7 @@ test('pasted secrets with stray spaces still work; a manual run confirms itself'
   const sentTo = [];
   const fetchFn = async (url, init) => {
     if (!String(url).includes('telegram')) return okNews();
+    if (String(url).includes('getUpdates')) return noUpdates;
     sentTo.push({ url: String(url), chat: JSON.parse(init.body).chat_id });
     return { ok: true, status: 200, json: async () => ({}) };
   };

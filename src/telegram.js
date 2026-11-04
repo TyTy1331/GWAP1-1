@@ -10,6 +10,8 @@ export function fmtTime(t) {
 }
 
 const name = (pair) => pair.split(':').pop();
+export const tag = (num) => (num ? `#${String(num).padStart(2, '0')}` : '');
+const head = (l) => `${tag(l.num) ? `${tag(l.num)} ` : ''}${esc(name(l.pair))}`;
 const side = (dir) => (dir === 'bull' ? 'BUY' : 'SELL');
 const trend = (t) => (t.dir ? `${t.dir === 'bull' ? 'bullish' : 'bearish'} (${t.count} BOS)` : 'unclear');
 
@@ -27,7 +29,7 @@ export function formatEvent(e, ctx = {}) {
   switch (e.kind) {
     case 'formed': {
       const lines = [
-        `🟡 <b>${esc(name(l.pair))} ${TF_LABEL[l.tf]} ${side(l.dir)}</b> — ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick`,
+        `🟡 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b> — ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick`,
         ...setupLines(l),
         `15m trend: ${trend(l.internal)} · 4H: ${trend(l.external)}${l.external.dir === l.dir ? ' (aligned)' : ' (against, 2 BOS rule met)'}`,
         `Session: ${esc(l.session)}`,
@@ -36,20 +38,21 @@ export function formatEvent(e, ctx = {}) {
       for (const w of l.setup.warnings) lines.push(`⚠️ ${esc(w)}`);
       for (const n of ctx.upcoming ?? []) lines.push(`📅 ${esc(n.country)} ${esc(n.title)} at ${fmtTime(n.t)}`);
       if (ctx.newsUnavailable) lines.push('📅 News check unavailable — check the calendar yourself');
+      if (l.num) lines.push(`When your trade closes, reply <b>${tag(l.num)}TP</b> or <b>${tag(l.num)}SL</b>`);
       return lines.join('\n');
     }
     case 'upgrade':
       return [
-        `🔼 <b>${esc(name(l.pair))} ${side(l.dir)} upgraded to ${TF_LABEL[l.tf]}</b> (level ${l.level})`,
+        `🔼 <b>${head(l)} ${side(l.dir)} upgraded to ${TF_LABEL[l.tf]}</b> (level ${l.level})`,
         ...setupLines(l),
         ...l.setup.warnings.map((w) => `⚠️ ${esc(w)}`),
         `Tap window now closes: ${fmtTime(l.deadline)}`,
       ].join('\n');
     case 'tap':
-      return `🎯 <b>${esc(name(l.pair))} ${TF_LABEL[l.tf]} ${side(l.dir)} tapped</b> at ${fmtTime(e.time)} (${l.tapIndex}/${config.tapWindowCandles})\n`
+      return `🎯 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)} tapped</b> at ${fmtTime(e.time)} (${l.tapIndex}/${config.tapWindowCandles})\n`
         + `Entry ${l.setup.entry} · Stop ${l.setup.stop} · TP ${l.setup.tp}`;
     case 'result':
-      return `${e.outcome === 'won' ? '✅' : '❌'} <b>${esc(name(l.pair))} ${TF_LABEL[l.tf]} ${side(l.dir)}: ${e.outcome === 'won' ? 'TP hit, +1R' : 'stopped out, −1R'}</b> at ${fmtTime(e.time)}`;
+      return `${e.outcome === 'won' ? '✅' : '❌'} <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}: ${e.outcome === 'won' ? 'TP hit, +1R' : 'stopped out, −1R'}</b> at ${fmtTime(e.time)}`;
     case 'gap':
       return `⚠️ <b>${esc(name(e.pair))}: data gap</b> ${fmtTime(e.from)} → ${fmtTime(e.to)}. ${e.count} live level(s) marked unknown.`;
     case 'warning':

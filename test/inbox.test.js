@@ -1,0 +1,58 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { parseReports, applyReport, readInbox } from '../src/inbox.js';
+import { recapText } from '../src/reports.js';
+import { formatEvent } from '../src/telegram.js';
+import { freshState } from '../src/state.js';
+
+const lvl = (num, extra = {}) => ({ num, pair: 'OANDA:AUDUSD', tf: 900, dir: 'bear', formedClose: 1000 + num, status: 'won', ...extra });
+
+test('parses #05TP, #5 sl and several reports in one message; ignores the rest', () => {
+  assert.deepEqual(parseReports('#05TP'), [{ num: 5, outcome: 'TP' }]);
+  assert.deepEqual(parseReports('closed #5 sl, and #12 TP'), [{ num: 5, outcome: 'SL' }, { num: 12, outcome: 'TP' }]);
+  assert.deepEqual(parseReports('05TP tp #TP #05 TPX'), []);
+});
+
+test('report marks the trade; a second report corrects it; unknown numbers say so', () => {
+  const s = freshState();
+  s.levels.push(lvl(5));
+  assert.match(applyReport(s, { num: 5, outcome: 'TP' }, 1), /#05 AUDUSD 15m SELL marked TP/);
+  assert.equal(s.levels[0].reported, 'TP');
+  assert.match(applyReport(s, { num: 5, outcome: 'SL' }, 2), /changed to SL/);
+  assert.match(applyReport(s, { num: 9, outcome: 'TP' }, 3), /No trade #09/);
+});
+
+const updates = (result) => async () => ({ ok: true, status: 200, json: async () => ({ ok: true, result }) });
+const msg = (update_id, chatId, text) => ({ update_id, message: { chat: { id: chatId }, text } });
+
+test('only the configured chat can report; offset advances past every update', async () => {
+  const s = freshState();
+  s.levels.push(lvl(5));
+  const replies = await readInbox(s, { token: 't', chatId: '873516785', now: 9, fetchFn: updates([msg(10, 111, '#05SL'), msg(11, 873516785, '#05TP')]) });
+  assert.equal(replies.length, 1);
+  assert.equal(s.levels[0].reported, 'TP');
+  assert.equal(s.tgOffset, 11);
+});
+
+test('being added to a group tells the configured chat that group\'s ID', async () => {
+  const s = freshState();
+  const joined = { update_id: 3, my_chat_member: { chat: { id: -1001234, title: 'GWAP TEAM' }, new_chat_member: { status: 'member' } } };
+  const [r] = await readInbox(s, { token: 't', chatId: '873516785', now: 9, fetchFn: updates([joined]) });
+  assert.match(r.text, /GWAP TEAM.*-1001234/);
+});
+
+test('recap lists your reported trades by number, plus bot tracking', () => {
+  const text = recapText([{ outcome: 'won', pair: 'OANDA:AUDUSD', tf: 900 }], 3, [lvl(7, { reported: 'SL' }), lvl(5, { reported: 'TP' })]);
+  assert.ok(text.includes('<b>Your trades</b>: 1 TP / 1 SL (50%)'));
+  assert.ok(text.indexOf('✅ #05') < text.indexOf('❌ #07'));
+  assert.ok(text.includes('Bot tracking'));
+});
+
+test('alerts carry the trade number and the reply hint', () => {
+  const level = { ...lvl(5), level: 0.7, deadline: 2000, session: 'London', internal: { dir: 'bear', count: 1 }, external: { dir: 'bear', count: 1 },
+    setup: { entry: 0.7, stop: 0.7011, altStop: null, tp: 0.6989, riskPips: 11, warnings: [] }, tapIndex: 2 };
+  const formed = formatEvent({ kind: 'formed', level });
+  assert.ok(formed.includes('#05 AUDUSD 15m SELL'));
+  assert.ok(formed.includes('reply <b>#05TP</b> or <b>#05SL</b>'));
+  assert.ok(formatEvent({ kind: 'tap', level, time: 1500 }).includes('#05 AUDUSD'));
+});

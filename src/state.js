@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 
 export const freshState = () => ({
   version: 1, pairs: {}, levels: [], results: [], sent: {}, failed: {}, outbox: [],
-  news: null, throttle: {}, lastCheckin: null, lastRecap: null,
+  news: null, throttle: {}, lastCheckin: null, lastRecap: null, nextNum: 1, tgOffset: 0,
 });
 
 // Never crashes a run: a missing or unreadable file starts fresh (the caller warns).

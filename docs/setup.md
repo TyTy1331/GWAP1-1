@@ -81,6 +81,21 @@ Some runs in the Actions tab show as "cancelled". That's normal: GitHub drops a 
 
 Taps and results are checked on 1-minute candles each run. Because GitHub's scheduler often starts runs a few minutes late, alerts can arrive 5–15 minutes after the event. The message always says when it actually happened.
 
+## Reporting your own trades (#05TP / #05SL)
+
+Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP` or `#05SL` (`#5 tp` works too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it.
+
+The weekly recap then shows **Your trades** (what you reported) separately from **Bot tracking** (whether the exact 1:1 levels were hit). Your results can differ from the bot's when you pre-enter, move to break-even, or pull TP in. Only the chat the alerts go to can report trades.
+
+## Sending alerts to a Telegram group
+
+1. **Let the bot read group messages.** In @BotFather send `/setprivacy`, pick your bot and choose **Disable**. Without this, Telegram hides normal group messages like `#05TP` from bots.
+2. **Add the bot to the group.** In the group: tap the group name → **Add members** → search `GWAPSIGNALS_BOT` → add. If it was already in the group before step 1, remove it and add it again so the privacy change applies.
+3. **Get the group's chat ID.** Within a few runs, the bot messages your current chat: "📍 I was added to "…". Its chat ID is -100…". The number starts with a minus sign.
+4. **Point the bot at the group.** Repo → Settings → Secrets and variables → Actions → `TELEGRAM_CHAT_ID` → pencil → paste the group's ID, including the minus sign → **Update secret**.
+
+From then on, alerts go to the group, and anyone in the group can report `#05TP`. To switch back, put your personal chat ID back in the secret.
+
 ## 6. Optional: TradingView login (only if anonymous data stops working)
 
 Create a **separate free TradingView account just for the bot**. Don't use your main one. Sign in to it in a browser. In the developer tools under Application → Cookies → tradingview.com, copy the `sessionid` and `sessionid_sign` values into secrets `TV_SESSION` and `TV_SIGNATURE`. If you ever see unfamiliar activity on that account, or the bot's dependencies change unexpectedly, log it out everywhere and replace both secrets.

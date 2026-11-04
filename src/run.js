@@ -9,6 +9,9 @@ import { newLevel, upgrade, advanceMinute, markDataGap, prune } from './lifecycl
 import { loadState, saveState } from './state.js';
 import { formatEvent, enqueue, deliver, TelegramError } from './telegram.js';
 import { checkinDue, checkinText, recapText } from './reports.js';
+import { readInbox } from './inbox.js';
+
+const nextNum = (state) => { const n = state.nextNum ?? 1; state.nextNum = n + 1; return n; };
 
 const floorTo = (t, tf) => Math.floor(t / tf) * tf;
 
@@ -61,7 +64,7 @@ export function processPair(state, pair, data, until, news) {
       const candles = upToHere(m15, it.i);
       const setup = buildSetup({ dir, candles, swings: a15.swings, tf: TF.M15, recentLevels: recentNoWicks(candles) });
       if (!setup) { why('no opposite swing for a stop'); continue; }
-      const level = newLevel({ pair, tf: TF.M15, candle: it.c, dir, setup, internal, external, session });
+      const level = newLevel({ pair, tf: TF.M15, candle: it.c, dir, setup, internal, external, session, num: nextNum(state) });
       state.levels.push(level);
       events.push({ kind: 'formed', id: `${level.id}:formed`, level, time: it.t,
         ctx: { upcoming: upcomingNews(news.events, pair, it.t), newsUnavailable: !news.ok } });
@@ -86,6 +89,9 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
   const open = marketOpen(now);
   const until = open ? now : latestMarketClose(now);
   let exitCode = 0, latestData = null;
+  const token = env.TELEGRAM_BOT_TOKEN?.trim(), chatId = env.TELEGRAM_CHAT_ID?.trim();
+  // Levels saved before trade numbers existed get one now.
+  for (const l of state.levels) if (!l.num && (l.status === 'active' || l.status === 'tracking')) l.num = nextNum(state);
 
   try {
     state.news = await refreshNews(state.news, now, fetchFn);
@@ -117,6 +123,12 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       }
     }
 
+    if (token && chatId && env.DRY_RUN !== '1') {
+      try {
+        for (const r of await readInbox(state, { token, chatId, fetchFn, now })) enqueue(state, r.id, r.text);
+      } catch (e) { warnOnce(state, 'inbox', now, `Could not read Telegram replies (${e.message}).`); }
+    }
+
     if (open) {
       const date = checkinDue(state, now);
       if (date) { state.lastCheckin = date; enqueue(state, `checkin:${date}`, checkinText(state, now, latestData ? now - latestData : NaN)); }
@@ -125,7 +137,8 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       state.lastRecap = until;
       const week = (t) => t > until - 7 * 86400 && t <= until;
       const alerts = state.levels.filter((l) => week(l.formedClose)).length;
-      enqueue(state, `recap:${until}`, recapText(state.results.filter((r) => week(r.closed)), alerts));
+      const reported = state.levels.filter((l) => l.reported && week(l.formedClose));
+      enqueue(state, `recap:${until}`, recapText(state.results.filter((r) => week(r.closed)), alerts, reported));
     }
     prune(state, now);
     if (env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
@@ -137,7 +150,6 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       for (const m of state.outbox) log(`--- ${m.id}\n${m.text}`);
       state.outbox = [];
     } else {
-      const token = env.TELEGRAM_BOT_TOKEN?.trim(), chatId = env.TELEGRAM_CHAT_ID?.trim();
       if (!token || !chatId) throw new Error('TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set (or DRY_RUN=1).');
       await deliver(state, { token, chatId, fetchFn, now, wait, log });
     }
