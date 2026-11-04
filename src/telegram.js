@@ -53,6 +53,11 @@ export function formatEvent(e, ctx = {}) {
         + `Entry ${l.setup.entry} · Stop ${l.setup.stop} · TP ${l.setup.tp}`;
     case 'result':
       return `${e.outcome === 'won' ? '✅' : '❌'} <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}: ${e.outcome === 'won' ? 'TP hit, +1R' : 'stopped out, −1R'}</b> at ${fmtTime(e.time)}`;
+    case 'be': {
+      const b = l.beSignal, toStop = b.mode === 'stop';
+      return `🛡️ <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}: no-wick against you</b> at ${b.at} (${fmtTime(e.time)})\n`
+        + (toStop ? `Trade is in profit → move your stop to break-even (${l.level}).` : `Trade is in drawdown → move your TP to break-even (${l.level}).`);
+    }
     case 'gap':
       return `⚠️ <b>${esc(name(e.pair))}: data gap</b> ${fmtTime(e.from)} → ${fmtTime(e.to)}. ${e.count} live level(s) marked unknown.`;
     case 'warning':

@@ -5,7 +5,7 @@ import { noWickDir, upgradesLevel } from './nowick.js';
 import { analyze, trendAt, isValid } from './structure.js';
 import { buildSetup, recentNoWicks } from './setup.js';
 import { sessionAt, marketOpen, latestMarketClose, marketMinutesBetween, refreshNews, newsMute, upcomingNews } from './filters.js';
-import { newLevel, upgrade, advanceMinute, markDataGap, prune } from './lifecycle.js';
+import { newLevel, upgrade, advanceMinute, markDataGap, prune, breakEvenSignals } from './lifecycle.js';
 import { loadState, saveState } from './state.js';
 import { formatEvent, enqueue, deliver, TelegramError } from './telegram.js';
 import { checkinDue, checkinText, recapText } from './reports.js';
@@ -57,6 +57,7 @@ export function processPair(state, pair, data, until, news) {
       ps.last15 = it.t;
       const dir = noWickDir(it.c);
       if (!dir) continue;
+      events.push(...breakEvenSignals(state, pair, it.c, dir, it.t));
       const session = sessionAt(it.t);
       const internal = trendAt(a15.bos, it.t), external = trendAt(a4.bos, it.t);
       const candles = upToHere(m15, it.i);

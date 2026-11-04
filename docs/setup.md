@@ -73,6 +73,7 @@ If the run fails with a TradingView error, GitHub's servers may be blocked from 
 | 🔼 upgraded | The 30m or 1H candle is also a no-wick. Stops and window recalculated on that timeframe |
 | 🎯 tapped | Price touched the level inside its 9-candle window ("2/9" = 2nd candle) |
 | ✅ / ❌ | TP or stop was hit first |
+| 🛡️ | A no-wick formed against your open trade. In profit: move the stop to break-even. In drawdown: move TP to break-even (Bard's rule) |
 | ⚠️ | Something needs your eye: stale data, news calendar down, a data gap, a failed run |
 | 🤖 | Daily check-in at 05:00 SAST on market days. **If it stops arriving, the bot has stopped** |
 | 📊 | Weekly recap after Friday's close |

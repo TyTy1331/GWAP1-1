@@ -6,13 +6,14 @@ import { fmtTime, tag } from './telegram.js';
 // One row per no-wick, alerted or skipped, in monthly CSV files that are never deleted.
 const COLUMNS = ['id', 'number', 'alerted', 'skip_reason', 'pair', 'timeframe', 'direction', 'formed_utc', 'formed_sast',
   'level', 'stop', 'alt_stop', 'tp', 'risk_pips', 'trend_15m', 'bos_15m', 'trend_4h', 'bos_4h', 'session', 'warnings',
-  'upgrades', 'tap_utc', 'tap_n', 'bot_result', 'muted_by_news', 'result_utc', 'reported', 'reported_utc'];
+  'upgrades', 'tap_utc', 'tap_n', 'bot_result', 'muted_by_news', 'result_utc', 'reported', 'reported_utc',
+  'be_signal_utc', 'be_action', 'managed_result'];
 
 const FINAL = new Set(['won', 'lost', 'expired', 'unknown', 'nosetup']);
 const RESULT = { won: 'TP', lost: 'SL', expired: 'expired', unknown: 'unknown', nosetup: 'no setup', tracking: 'open', active: 'open' };
 const iso = (t) => (t ? new Date(t * 1000).toISOString().replace('.000Z', 'Z') : '');
 const cell = (v) => { const s = v === undefined || v === null ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-const signature = (l) => `${l.status}|${l.reported ?? ''}|${l.upgrades.length}`;
+const signature = (l) => `${l.status}|${l.reported ?? ''}|${l.upgrades.length}|${l.managedResult ?? ''}`;
 
 export function journalRow(l) {
   const s = l.setup ?? {};
@@ -22,6 +23,7 @@ export function journalRow(l) {
     l.internal?.dir ?? '', l.internal?.count ?? '', l.external?.dir ?? '', l.external?.count ?? '', l.session,
     (s.warnings ?? []).join('; '), l.upgrades.map((tf) => TF_LABEL[tf]).join(';'), iso(l.tapTime), l.tapIndex ?? '',
     RESULT[l.status] ?? l.status, l.muted ? 'yes' : '', iso(l.resultTime), l.reported ?? '', iso(l.reportedAt),
+    iso(l.beSignal?.time), l.beSignal ? (l.beSignal.mode === 'stop' ? 'stop to BE' : 'TP to BE') : '', l.managedResult ?? '',
   ].map(cell).join(',');
 }
 
