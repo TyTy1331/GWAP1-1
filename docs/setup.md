@@ -87,6 +87,18 @@ Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL
 
 The weekly recap then shows **Your trades** (what you reported) separately from **Bot tracking** (whether the exact 1:1 levels were hit). Your results can differ from the bot's when you pre-enter, move to break-even, or pull TP in. Only the chat the alerts go to can report trades.
 
+## The trade journal (your data for analysis)
+
+Every 15m no-wick the bot sees is written to a monthly spreadsheet on the `bot-state` branch: `journal/2026-11.csv`, `journal/2026-12.csv`, and so on. That includes the ones it **skipped**, with the reason. Skipped ones are tracked silently (no alerts), so you can later see how they would have done. Journal files are never deleted.
+
+Each row has: number, whether it was alerted or skipped (and why), pair, timeframe, BUY/SELL, formation time (UTC and SAST), level, stop, alternative stop, TP, risk, 15m and 4H trend with BOS counts, session, warnings, upgrades, tap time and n/9, the bot's result (TP, SL, expired, unknown, no setup, plus whether news muted it), and your reported TP/SL.
+
+A row appears once the setup finishes (TP, SL or expired) or when you report it.
+
+**To download:** open the repo on GitHub → branch selector (says `main`) → `bot-state` → `journal` folder → a month's file → the download button (⬇) at the top right. Opens in Excel or Google Sheets. To have it analyzed, give the files to Claude.
+
+The `bot-state` branch only ever holds the latest copy (one commit, replaced each run), so it doesn't grow with every run. The journal files inside it keep the full history.
+
 ## Sending alerts to a Telegram group
 
 1. **Let the bot read group messages.** In @BotFather send `/setprivacy`, pick your bot and choose **Disable**. Without this, Telegram hides normal group messages like `#05TP` from bots.

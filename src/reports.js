@@ -8,8 +8,8 @@ export function checkinDue(state, now) {
 }
 
 export function checkinText(state, now, dataAgeSec) {
-  const active = state.levels.filter((l) => l.status === 'active').length;
-  const open = state.levels.filter((l) => l.status === 'tracking').length;
+  const active = state.levels.filter((l) => !l.shadow && l.status === 'active').length;
+  const open = state.levels.filter((l) => !l.shadow && l.status === 'tracking').length;
   return `🤖 No-wick bot running. ${active} active level(s), ${open} open trade(s). Latest data ${Number.isFinite(dataAgeSec) ? `${Math.round(dataAgeSec / 60)} min old` : "not fetched this run"}.`;
 }
 

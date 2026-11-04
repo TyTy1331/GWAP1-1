@@ -22,7 +22,11 @@ test('report marks the trade; a second report corrects it; unknown numbers say s
   assert.match(applyReport(s, { num: 9, outcome: 'TP' }, 3), /No trade #09/);
 });
 
-const updates = (result) => async () => ({ ok: true, status: 200, json: async () => ({ ok: true, result }) });
+// Behaves like Telegram: only returns updates at or after the requested offset.
+const updates = (all) => async (url) => {
+  const offset = Number(new URL(url).searchParams.get('offset'));
+  return { ok: true, status: 200, json: async () => ({ ok: true, result: all.filter((u) => u.update_id >= offset) }) };
+};
 const msg = (update_id, chatId, text) => ({ update_id, message: { chat: { id: chatId }, text } });
 
 test('only the configured chat can report; offset advances past every update', async () => {
@@ -55,4 +59,17 @@ test('alerts carry the trade number and the reply hint', () => {
   assert.ok(formed.includes('#05 AUDUSD 15m SELL'));
   assert.ok(formed.includes('reply <b>#05TP</b> or <b>#05SL</b>'));
   assert.ok(formatEvent({ kind: 'tap', level, time: 1500 }).includes('#05 AUDUSD'));
+});
+
+test('reads past 100 messages in one run', async () => {
+  const s = freshState();
+  s.levels.push(lvl(5));
+  const many = Array.from({ length: 250 }, (_, i) => msg(i + 1, 873516785, i === 230 ? '#05TP' : 'chat'));
+  const pages = async (url) => {
+    const offset = Number(new URL(url).searchParams.get('offset'));
+    return { ok: true, status: 200, json: async () => ({ ok: true, result: many.filter((u) => u.update_id >= offset).slice(0, 100) }) };
+  };
+  const replies = await readInbox(s, { token: 't', chatId: '873516785', now: 9, fetchFn: pages });
+  assert.equal(replies.length, 1);
+  assert.equal(s.tgOffset, 250);
 });

@@ -5,6 +5,7 @@ Telegram alerts for BardFX's no-wick 1:1 entry model on OANDA AUDUSD and GBPUSD,
 - Detects bullish (open = low) and bearish (open = high) no-wick candles on the 15m, upgrading to 30m/1H when they line up
 - Checks the 15m body-close structure (BOS) and 4H alignment, sessions and red-folder news
 - Sends formation, tap (within 9 candles), TP/SL result, daily check-in and weekly recap messages
+- Keeps a permanent monthly trade journal (CSV) of every no-wick, alerted or skipped, on the `bot-state` branch
 
 Setup: [docs/setup.md](docs/setup.md). Requirements and design: `docs/brainstorms/` and `docs/plans/`.
 

@@ -24,7 +24,7 @@ const hitTp = (l, c) => (l.dir === 'bull' ? c.high >= l.setup.tp : c.low <= l.se
 function resolve(l, outcome, t, results) {
   l.status = outcome === 'won' ? 'won' : 'lost';
   l.resultTime = t;
-  results.push({ id: l.id, pair: l.pair, tf: l.tf, dir: l.dir, outcome: l.muted ? 'muted' : outcome, formed: l.formedClose, tapped: l.tapTime, closed: t });
+  results.push({ id: l.id, pair: l.pair, tf: l.tf, dir: l.dir, outcome: l.muted ? 'muted' : outcome, formed: l.formedClose, tapped: l.tapTime, closed: t, ...(l.shadow ? { shadow: true } : {}) });
   return l.muted ? [] : [{ kind: 'result', id: `${l.id}:result`, level: l, outcome, time: t }];
 }
 
@@ -48,17 +48,17 @@ export function advanceMinute(state, pair, c, newsEvents) {
       else if (hitTp(l, c)) events.push(...resolve(l, 'won', c.time, state.results));
     }
   }
-  return events;
+  return events.filter((e) => !e.level.shadow); // skipped setups are tracked, never alerted
 }
 
 // Missing 1m history beyond normal closures: live levels can't be judged honestly.
 export function markDataGap(state, pair, from, to) {
   const hit = state.levels.filter((l) => l.pair === pair && (l.status === 'active' || l.status === 'tracking'));
   for (const l of hit) {
-    if (l.status === 'tracking') state.results.push({ id: l.id, pair, tf: l.tf, dir: l.dir, outcome: 'unknown', formed: l.formedClose, tapped: l.tapTime, closed: to });
+    if (l.status === 'tracking') state.results.push({ id: l.id, pair, tf: l.tf, dir: l.dir, outcome: 'unknown', formed: l.formedClose, tapped: l.tapTime, closed: to, ...(l.shadow ? { shadow: true } : {}) });
     l.status = 'unknown';
   }
-  return [{ kind: 'gap', id: `${pair}:gap:${from}`, pair, from, to, count: hit.length, time: to }];
+  return [{ kind: 'gap', id: `${pair}:gap:${from}`, pair, from, to, count: hit.filter((l) => !l.shadow).length, time: to }];
 }
 
 export function prune(state, now) {

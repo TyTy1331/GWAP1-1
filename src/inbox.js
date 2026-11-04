@@ -23,20 +23,24 @@ export function applyReport(state, { num, outcome }, now) {
 // is added to another group, it tells the configured chat that group's ID.
 export async function readInbox(state, { token, chatId, fetchFn = fetch, now }) {
   const replies = [];
-  const params = new URLSearchParams({ offset: String((state.tgOffset ?? 0) + 1), timeout: '0', allowed_updates: '["message","my_chat_member"]' });
-  const res = await fetchFn(`https://api.telegram.org/bot${token}/getUpdates?${params}`);
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.ok) throw new Error(`Telegram getUpdates ${res.status}`);
-  for (const u of data.result ?? []) {
-    state.tgOffset = Math.max(state.tgOffset ?? 0, u.update_id);
-    const joined = u.my_chat_member;
-    if (joined && ['member', 'administrator'].includes(joined.new_chat_member?.status) && String(joined.chat.id) !== chatId) {
-      replies.push({ id: `joined:${joined.chat.id}`, text: `📍 I was added to "${esc(joined.chat.title ?? 'a chat')}". Its chat ID is <code>${joined.chat.id}</code>. To send alerts there, set the TELEGRAM_CHAT_ID secret to this number.` });
-      continue;
+  // Telegram returns at most 100 updates per call and keeps unread ones for 24h: read until empty.
+  for (let page = 0; page < 50; page++) {
+    const params = new URLSearchParams({ offset: String((state.tgOffset ?? 0) + 1), limit: '100', timeout: '0', allowed_updates: '["message","my_chat_member"]' });
+    const res = await fetchFn(`https://api.telegram.org/bot${token}/getUpdates?${params}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(`Telegram getUpdates ${res.status}`);
+    if (!data.result?.length) break;
+    for (const u of data.result) {
+      state.tgOffset = Math.max(state.tgOffset ?? 0, u.update_id);
+      const joined = u.my_chat_member;
+      if (joined && ['member', 'administrator'].includes(joined.new_chat_member?.status) && String(joined.chat.id) !== chatId) {
+        replies.push({ id: `joined:${joined.chat.id}`, text: `📍 I was added to "${esc(joined.chat.title ?? 'a chat')}". Its chat ID is <code>${joined.chat.id}</code>. To send alerts there, set the TELEGRAM_CHAT_ID secret to this number.` });
+        continue;
+      }
+      const msg = u.message;
+      if (!msg?.text || String(msg.chat.id) !== chatId) continue;
+      parseReports(msg.text).forEach((r, i) => replies.push({ id: `report:${u.update_id}:${i}`, text: applyReport(state, r, now) }));
     }
-    const msg = u.message;
-    if (!msg?.text || String(msg.chat.id) !== chatId) continue;
-    parseReports(msg.text).forEach((r, i) => replies.push({ id: `report:${u.update_id}:${i}`, text: applyReport(state, r, now) }));
   }
   return replies;
 }

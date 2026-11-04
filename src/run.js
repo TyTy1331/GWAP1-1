@@ -10,6 +10,8 @@ import { loadState, saveState } from './state.js';
 import { formatEvent, enqueue, deliver, TelegramError } from './telegram.js';
 import { checkinDue, checkinText, recapText } from './reports.js';
 import { readInbox } from './inbox.js';
+import { syncJournal } from './journal.js';
+import { dirname, join } from 'node:path';
 
 const nextNum = (state) => { const n = state.nextNum ?? 1; state.nextNum = n + 1; return n; };
 
@@ -55,17 +57,22 @@ export function processPair(state, pair, data, until, news) {
       ps.last15 = it.t;
       const dir = noWickDir(it.c);
       if (!dir) continue;
-      const why = (reason) => skipped.push({ time: it.t, dir, level: it.c.open, reason });
       const session = sessionAt(it.t);
-      if (!session) { why('outside session'); continue; }
-      if (newsMute(news.events, pair, it.t)) { why('red-folder news'); continue; }
       const internal = trendAt(a15.bos, it.t), external = trendAt(a4.bos, it.t);
-      if (!isValid(dir, internal, external)) { why(`trend (15m ${internal.dir ?? '?'}×${internal.count}, 4H ${external.dir ?? '?'})`); continue; }
       const candles = upToHere(m15, it.i);
       const setup = buildSetup({ dir, candles, swings: a15.swings, tf: TF.M15, recentLevels: recentNoWicks(candles) });
-      if (!setup) { why('no opposite swing for a stop'); continue; }
-      const level = newLevel({ pair, tf: TF.M15, candle: it.c, dir, setup, internal, external, session, num: nextNum(state) });
+      const reason = !session ? 'outside session'
+        : newsMute(news.events, pair, it.t) ? 'red-folder news'
+        : !isValid(dir, internal, external) ? `trend (15m ${internal.dir ?? '?'}×${internal.count}, 4H ${external.dir ?? '?'})`
+        : !setup ? 'no opposite swing for a stop' : null;
+      // Skipped no-wicks are still tracked silently (no alerts) so the journal shows how they would have done.
+      const level = newLevel({ pair, tf: TF.M15, candle: it.c, dir, setup, internal, external, session: session ?? 'none', num: reason ? undefined : nextNum(state) });
       state.levels.push(level);
+      if (reason) {
+        skipped.push({ time: it.t, dir, level: it.c.open, reason });
+        Object.assign(level, { shadow: true, skipReason: reason, ...(setup ? {} : { status: 'nosetup' }) });
+        continue;
+      }
       events.push({ kind: 'formed', id: `${level.id}:formed`, level, time: it.t,
         ctx: { upcoming: upcomingNews(news.events, pair, it.t), newsUnavailable: !news.ok } });
     } else {
@@ -74,7 +81,7 @@ export function processPair(state, pair, data, until, news) {
         const candles = upToHere(it.list, it.i);
         const setup = buildSetup({ dir: l.dir, candles, swings: aHigher[it.tf].swings, tf: it.tf, recentLevels: recentNoWicks(candles) }) ?? l.setup;
         upgrade(l, it.tf, it.c, setup);
-        events.push({ kind: 'upgrade', id: `${l.id}:up${it.tf}`, level: l, time: it.t });
+        if (!l.shadow) events.push({ kind: 'upgrade', id: `${l.id}:up${it.tf}`, level: l, time: it.t });
       }
     }
   }
@@ -136,13 +143,13 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       && config.pairs.every((p) => !state.pairs[p] || state.pairs[p].last1m >= until - 300)) {
       state.lastRecap = until;
       const week = (t) => t > until - 7 * 86400 && t <= until;
-      const alerts = state.levels.filter((l) => week(l.formedClose)).length;
+      const alerts = state.levels.filter((l) => !l.shadow && week(l.formedClose)).length;
       const reported = state.levels.filter((l) => l.reported && week(l.formedClose));
-      enqueue(state, `recap:${until}`, recapText(state.results.filter((r) => week(r.closed)), alerts, reported));
+      enqueue(state, `recap:${until}`, recapText(state.results.filter((r) => !r.shadow && week(r.closed)), alerts, reported));
     }
     prune(state, now);
     if (env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
-      const live = state.levels.filter((l) => l.status === 'active' || l.status === 'tracking').length;
+      const live = state.levels.filter((l) => !l.shadow && (l.status === 'active' || l.status === 'tracking')).length;
       enqueue(state, `manual:${now}`, `✅ Manual run OK. Market ${open ? 'open' : 'closed'}, ${live} live level(s).`);
     }
 
@@ -157,6 +164,10 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
     exitCode = 1;
     log(`Run failed: ${e instanceof TelegramError || e instanceof FeedError ? e.message : e?.message ?? e}`);
   } finally {
+    try {
+      const n = syncJournal(state, join(dirname(statePath), 'journal'));
+      if (n) log(`Journal: ${n} row(s) written`);
+    } catch (e) { log(`Journal write failed: ${e.message}`); }
     saveState(statePath, state); // always, so sent IDs and progress survive a failed run
   }
   log(`Done. outbox=${state.outbox.length} levels=${state.levels.filter((l) => l.status === 'active' || l.status === 'tracking').length}`);
