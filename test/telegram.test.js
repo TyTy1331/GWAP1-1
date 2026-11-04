@@ -55,6 +55,17 @@ test('400 parse error is permanent: marked failed, notice sent, never retried', 
   assert.equal(state.outbox.length, 0);
 });
 
+test('wrong token or chat ID fails the run and keeps alerts queued', async () => {
+  for (const [status, description] of [[401, 'Unauthorized'], [400, 'Bad Request: chat not found']]) {
+    const state = freshState();
+    enqueue(state, 'a', 'hello');
+    await assert.rejects(deliver(state, { token: 't', chatId: 'c', fetchFn: async () => res(status, { description }), now: 1, wait: noWait }),
+      (e) => e instanceof TelegramError && e.message.includes('Check the TELEGRAM_BOT_TOKEN'));
+    assert.equal(state.outbox.length, 1);
+    assert.deepEqual(state.failed, {});
+  }
+});
+
 test('already-sent IDs are never queued again', () => {
   const state = freshState();
   state.sent.x = 1;

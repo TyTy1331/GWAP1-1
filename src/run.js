@@ -128,13 +128,18 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       enqueue(state, `recap:${until}`, recapText(state.results.filter((r) => week(r.closed)), alerts));
     }
     prune(state, now);
+    if (env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
+      const live = state.levels.filter((l) => l.status === 'active' || l.status === 'tracking').length;
+      enqueue(state, `manual:${now}`, `✅ Manual run OK. Market ${open ? 'open' : 'closed'}, ${live} live level(s).`);
+    }
 
     if (env.DRY_RUN === '1') {
       for (const m of state.outbox) log(`--- ${m.id}\n${m.text}`);
       state.outbox = [];
     } else {
-      if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) throw new Error('TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set (or DRY_RUN=1).');
-      await deliver(state, { token: env.TELEGRAM_BOT_TOKEN, chatId: env.TELEGRAM_CHAT_ID, fetchFn, now, wait });
+      const token = env.TELEGRAM_BOT_TOKEN?.trim(), chatId = env.TELEGRAM_CHAT_ID?.trim();
+      if (!token || !chatId) throw new Error('TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set (or DRY_RUN=1).');
+      await deliver(state, { token, chatId, fetchFn, now, wait, log });
     }
   } catch (e) {
     exitCode = 1;

@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -28,7 +28,7 @@ jobs:
           git clone -q --depth 1 --branch bot-state "https://github.com/${GITHUB_REPOSITORY}.git" state \
             || { mkdir -p state && git -C state init -q -b bot-state; }
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

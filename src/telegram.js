@@ -83,7 +83,12 @@ export async function sendMessage(text, { token, chatId, fetchFn = fetch, html =
     const data = await res.json().catch(() => ({}));
     if (res.status === 429) { await wait(((data.parameters?.retry_after ?? 1) + 0.5) * 1000); continue; }
     if (res.status >= 500) { if (++serverErrors > 1) throw new TelegramError(`Telegram ${res.status}`); continue; }
-    return { permanent: `Telegram ${res.status}: ${String(data.description ?? '').slice(0, 120)}` };
+    const why = `Telegram ${res.status}: ${String(data.description ?? '').slice(0, 120)}`;
+    // Bad token, unknown chat or blocked bot is a setup problem: fail the run and keep the alerts queued.
+    if ([401, 403, 404].includes(res.status) || /chat not found/i.test(why)) {
+      throw new TelegramError(`${why}. Check the TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID secrets.`);
+    }
+    return { permanent: why };
   }
   throw new TelegramError('Telegram kept rate-limiting');
 }
@@ -102,6 +107,7 @@ export async function deliver(state, opts) {
     state.outbox.shift();
     if (result === 'sent') { state.sent[m.id] = opts.now; continue; }
     state.failed[m.id] = opts.now;
+    opts.log?.(`Telegram refused ${m.id}: ${result.permanent}`);
     await sendMessage(`An alert could not be delivered (${result.permanent}). ID: ${m.id}`, { ...opts, html: false }).catch(() => {});
   }
 }

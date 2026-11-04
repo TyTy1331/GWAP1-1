@@ -119,6 +119,21 @@ test('Telegram 5xx: state (sent IDs, progress) is written before the failing exi
   assert.deepEqual(s.outbox.map((m) => m.id), ['two']);
 });
 
+test('pasted secrets with stray spaces still work; a manual run confirms itself', async () => {
+  const now = utc('2026-11-04T09:07:30Z');
+  const { STATE_PATH, read } = setupRun(now, (s) => { s.lastCheckin = '2026-11-04'; });
+  const sentTo = [];
+  const fetchFn = async (url, init) => {
+    if (!String(url).includes('telegram')) return okNews();
+    sentTo.push({ url: String(url), chat: JSON.parse(init.body).chat_id });
+    return { ok: true, status: 200, json: async () => ({}) };
+  };
+  const env = { STATE_PATH, TELEGRAM_BOT_TOKEN: ' tok\n', TELEGRAM_CHAT_ID: '873516785 ', GITHUB_EVENT_NAME: 'workflow_dispatch' };
+  assert.equal(await runOnce({ now, env, getCandles: fakeCandles(now), fetchFn, log: () => {} }), 0);
+  assert.deepEqual(sentTo, [{ url: 'https://api.telegram.org/bottok/sendMessage', chat: '873516785' }]);
+  assert.ok(Object.keys(read().sent)[0].startsWith('manual:'));
+});
+
 test('weekend: catches up to the Friday close, then sends the recap once', async () => {
   const close = utc('2026-11-06T22:00:00Z');
   const now = close + 600; // Fri 17:10 NY
