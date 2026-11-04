@@ -2,7 +2,9 @@ name: scan
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # GitHub's minimum; runs may start late, the bot catches up by candle time
+    # Every 5 minutes, offset to :02/:07/… because GitHub delays or drops runs at busy :00 marks.
+    # Runs may still start late; the bot catches up by candle time.
+    - cron: '2-59/5 * * * *'
   workflow_dispatch:
 
 permissions:
