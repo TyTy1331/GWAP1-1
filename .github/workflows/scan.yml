@@ -1,0 +1,79 @@
+name: scan
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # GitHub's minimum; runs may start late, the bot catches up by candle time
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One run at a time. GitHub keeps at most one pending run and cancels older pending ones;
+# that is harmless because every run replays from saved state.
+concurrency:
+  group: scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Check out state branch
+        run: |
+          git clone -q --depth 1 --branch bot-state "https://github.com/${GITHUB_REPOSITORY}.git" state \
+            || { mkdir -p state && git -C state init -q -b bot-state; }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - name: Run bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TV_SESSION: ${{ secrets.TV_SESSION }}
+          TV_SIGNATURE: ${{ secrets.TV_SIGNATURE }}
+          STATE_PATH: state/state.json
+        run: node src/run.js
+
+      - name: Save state
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd state
+          [ -f state.json ] || exit 0
+          git add state.json
+          if git diff --cached --quiet; then echo "state unchanged"; exit 0; fi
+          git -c user.name=nowick-bot -c user.email=nowick-bot@users.noreply.github.com commit -q -m "state $(date -u +%FT%TZ)"
+          git push -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:bot-state
+
+      - name: Keep schedule alive
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          last=$(git log -1 --format=%ct)
+          if [ $(( $(date +%s) - last )) -lt $(( 30 * 86400 )) ]; then exit 0; fi
+          date -u +%FT%TZ > .keepalive
+          git add .keepalive
+          git -c user.name=nowick-bot -c user.email=nowick-bot@users.noreply.github.com commit -q -m "chore: keep schedule alive"
+          git push -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Report failure
+        if: ${{ failure() }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -o /dev/null -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=⚠️ No-wick bot run failed: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

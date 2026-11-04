@@ -1,0 +1,7 @@
+[
+  {"title":"CPI m/m","country":"USD","date":"2026-11-04T08:30:00-05:00","impact":"High","forecast":"0.3%","previous":"0.2%"},
+  {"title":"GDP <prelim> & revisions","country":"GBP","date":"2026-11-04T06:00:00+00:00","impact":"High","forecast":"","previous":""},
+  {"title":"Employment Change","country":"AUD","date":"2026-11-04T19:30:00-05:00","impact":"High","forecast":"","previous":""},
+  {"title":"Retail Sales","country":"USD","date":"2026-11-04T10:00:00-05:00","impact":"Low","forecast":"","previous":""},
+  {"title":"Bank Holiday","country":"GBP","date":"2026-11-04T00:00:00+00:00","impact":"Holiday","forecast":"","previous":""}
+]

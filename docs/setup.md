@@ -1,0 +1,108 @@
+# Setup guide
+
+Everything here is free. Budget about 20 minutes.
+
+## Before you start: this repo is public
+
+Free unlimited GitHub Actions minutes need a **public** repository. That means anyone can read:
+
+- the `bot-state` branch: your active levels, open trades with entries/stops/TP, and your results and win rate
+- the Actions run logs (they only print counts and IDs, never your tokens or messages)
+
+Your Telegram token, chat ID and any TradingView login stay private as encrypted secrets. If you don't want your signals visible, the alternative is running the bot on a spare phone at home instead.
+
+## 1. Create the Telegram bot (2 minutes)
+
+1. In Telegram, open a chat with **@BotFather** and send `/newbot`. Pick any name and username.
+2. BotFather replies with a **token** like `123456789:AA...`. Keep it secret.
+3. Open a chat with your new bot and send it any message (e.g. "hi").
+4. In a browser, open `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates` (paste your token in place of `<YOUR_TOKEN>`).
+   Find `"chat":{"id":` in the reply. That number is your **chat ID**.
+
+## 2. Create the GitHub repository
+
+1. Sign in at github.com and create a new **public** repository (e.g. `nowick-alert-bot`). Don't add a README.
+2. Push this folder to it. From this folder in a terminal:
+
+```bash
+git init -b main
+```
+
+```bash
+git add .
+```
+
+```bash
+git commit -m "No-wick alert bot"
+```
+
+```bash
+git remote add origin https://github.com/<you>/nowick-alert-bot.git
+```
+
+```bash
+git push -u origin main
+```
+
+## 3. Add the secrets
+
+In the repo: **Settings → Secrets and variables → Actions → New repository secret**. Add:
+
+| Name | Value |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` | the token from BotFather |
+| `TELEGRAM_CHAT_ID` | your chat ID |
+
+Leave `TV_SESSION` / `TV_SIGNATURE` out for now (see step 6).
+
+## 4. First run
+
+1. Go to the **Actions** tab. If GitHub asks, click to enable workflows.
+2. Pick **scan** → **Run workflow**.
+3. Within a minute you should get "🤖 No-wick bot running…" on Telegram. A `bot-state` branch appears in the repo.
+
+The first run only records "now" as its starting point. It never sends alerts for older candles. From then on it runs every 5 minutes by itself.
+
+If the run fails with a TradingView error, GitHub's servers may be blocked from TradingView's free data. Try step 6.
+
+## 5. Reading what you get
+
+| Message | Meaning |
+|---|---|
+| 🟡 BUY/SELL | A valid no-wick formed. Entry, stops, TP, trend, session, tap deadline and any warnings |
+| 🔼 upgraded | The 30m or 1H candle is also a no-wick. Stops and window recalculated on that timeframe |
+| 🎯 tapped | Price touched the level inside its 9-candle window ("2/9" = 2nd candle) |
+| ✅ / ❌ | TP or stop was hit first |
+| ⚠️ | Something needs your eye: stale data, news calendar down, a data gap, a failed run |
+| 🤖 | Daily check-in at 05:00 SAST on market days. **If it stops arriving, the bot has stopped** |
+| 📊 | Weekly recap after Friday's close |
+
+Some runs in the Actions tab show as "cancelled". That's normal: GitHub drops a waiting run when a newer one is queued, and the next run catches up.
+
+Taps and results are checked on 1-minute candles each run. Because GitHub's scheduler often starts runs a few minutes late, alerts can arrive 5–15 minutes after the event. The message always says when it actually happened.
+
+## 6. Optional: TradingView login (only if anonymous data stops working)
+
+Create a **separate free TradingView account just for the bot**. Don't use your main one. Sign in to it in a browser. In the developer tools under Application → Cookies → tradingview.com, copy the `sessionid` and `sessionid_sign` values into secrets `TV_SESSION` and `TV_SIGNATURE`. If you ever see unfamiliar activity on that account, or the bot's dependencies change unexpectedly, log it out everywhere and replace both secrets.
+
+## 7. Calibration (first 1–2 weeks)
+
+On your PC, in this folder:
+
+```bash
+npm ci --ignore-scripts
+```
+
+```bash
+node scripts/calibrate.js AUDUSD 2
+```
+
+This prints, in SAST, every 15m no-wick from the last 2 days, whether the bot would have alerted and why not, plus every BOS it saw on the 15m and 4H. Compare against your chart with X Ghost Wickless Candles. Note any disagreements. Thresholds such as the doji size, stop buffer and void length live in `src/config.js`.
+
+## Changing settings
+
+Everything tunable is in `src/config.js`: pairs, session windows, tap window, stop buffer, large-stop threshold, news mute window and check-in time. Commit and push a change, and the next run uses it.
+
+## Updating the TradingView library
+
+The library version is pinned on purpose. To update it, change the version in `package.json`, run `npm install --ignore-scripts`, run `node scripts/calibrate.js` to confirm candles still look right, then commit both `package.json` and `package-lock.json`.

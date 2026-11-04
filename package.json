@@ -1,0 +1,16 @@
+{
+  "name": "nowick-alert-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Telegram alerts for BardFX's no-wick 1:1 model on OANDA AUDUSD/GBPUSD, run free on GitHub Actions.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test",
+    "start": "node src/run.js",
+    "calibrate": "node scripts/calibrate.js"
+  },
+  "dependencies": {
+    "@mathieuc/tradingview": "4.1.1"
+  }
+}
