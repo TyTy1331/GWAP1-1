@@ -102,9 +102,7 @@ DAs never block a normal alert. They add warnings: **entry inside a DA**, **sell
 
 ## Instruments
 
-The bot watches **AUDUSD, GBPUSD, AUDJPY** (OANDA) and **NAS100** (FXCM, called `FX:NAS100` on TradingView). To add or remove one, edit `pairs` in `src/config.js`.
-- **AUDJPY:** 1 pip = 0.01.
-- **NAS100:** risk is shown in points. Pip-based settings run in 10-point steps: a 10-point stop buffer, voids of 100+ points, and a "large stop" above 200 points. Red-folder **USD** news mutes it. Its daily close (00:00–01:00 SAST) doesn't trigger stale-data warnings.
+The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA). For AUDJPY, 1 pip = 0.01. To add or remove a pair, edit `pairs` in `src/config.js`. Non-forex symbols, like indices, also need an entry in `instruments` (pip size, scale and news currency). FXCM symbols use the prefix `FX:` on TradingView.
 
 ## Trading hours and trend rule
 

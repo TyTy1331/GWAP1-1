@@ -1,6 +1,6 @@
 # No-wick alert bot
 
-Telegram alerts for BardFX's no-wick 1:1 entry model on OANDA AUDUSD, GBPUSD and AUDJPY plus FXCM NAS100 (`FX:NAS100` on TradingView), run every 5 minutes by GitHub Actions for $0. Alerts only — it never places trades.
+Telegram alerts for BardFX's no-wick 1:1 entry model on OANDA AUDUSD, GBPUSD and AUDJPY, run every 5 minutes by GitHub Actions for $0. Alerts only — it never places trades.
 
 - Detects bullish (open = low) and bearish (open = high) no-wick candles on the 15m, upgrading to 30m/1H when they line up
 - Checks the 15m body-close structure (BOS) and 4H alignment, sessions and red-folder news
