@@ -98,8 +98,11 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
   const until = open ? now : latestMarketClose(now);
   let exitCode = 0, latestData = null;
   const token = env.TELEGRAM_BOT_TOKEN?.trim(), chatId = env.TELEGRAM_CHAT_ID?.trim();
-  // Levels saved before trade numbers existed get one now.
-  for (const l of state.levels) if (!l.num && (l.status === 'active' || l.status === 'tracking')) l.num = nextNum(state);
+  // Alerted levels saved before trade numbers existed get one; skipped (shadow) setups never have one.
+  for (const l of state.levels) {
+    if (l.shadow) delete l.num;
+    else if (!l.num && (l.status === 'active' || l.status === 'tracking')) l.num = nextNum(state);
+  }
 
   try {
     state.news = await refreshNews(state.news, now, fetchFn);

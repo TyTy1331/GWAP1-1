@@ -150,6 +150,19 @@ test('cron-job.org triggers do not post "Manual run OK"', async () => {
   assert.ok(logs.some((l) => l.includes('Manual run OK')));
 });
 
+test('skipped setups never carry a trade number, even from older state', async () => {
+  const now = utc('2026-11-04T09:07:30Z');
+  const { STATE_PATH, read } = setupRun(now, (s) => {
+    s.lastCheckin = '2026-11-04'; s.nextNum = 12;
+    s.levels.push({ id: 'a', pair: PAIR, status: 'active', shadow: true, num: 11, formedClose: now, upgrades: [] },
+      { id: 'b', pair: PAIR, status: 'active', formedClose: now, upgrades: [] });
+  });
+  await runOnce({ now, env: { STATE_PATH, DRY_RUN: '1' }, getCandles: fakeCandles(now), fetchFn: okNews, log: () => {} });
+  const [shadow, real] = read().levels;
+  assert.equal(shadow.num, undefined);
+  assert.equal(real.num, 12);
+});
+
 test('weekend: catches up to the Friday close, then sends the recap once', async () => {
   const close = utc('2026-11-06T22:00:00Z');
   const now = close + 600; // Fri 17:10 NY
