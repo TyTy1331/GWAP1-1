@@ -34,7 +34,7 @@ export function formatEvent(e, ctx = {}) {
           : `🟡 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b> — ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick`,
         ...(da ? [`Counter-trend ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick after price held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : []),
         ...setupLines(l),
-        `15m trend: ${trend(l.internal)} · 4H: ${trend(l.external)}${l.external.dir === l.dir ? ' (aligned)' : da ? ' (against — DA play, 1 BOS)' : ' (against, 2 BOS rule met)'}`,
+        `15m trend: ${trend(l.internal)} · 4H: ${trend(l.external)}${l.external.dir === l.dir ? (l.internal.dir === l.dir ? ' (aligned)' : ' (aligned — 1 BOS against = pullback)') : da ? ' (against — DA play, 1 BOS)' : ' (against, 2 BOS rule met)'}`,
         `Session: ${esc(l.session)}`,
         `Tap window closes: ${fmtTime(l.deadline)}`,
       ];

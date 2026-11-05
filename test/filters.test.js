@@ -8,19 +8,13 @@ import { utc } from './helpers/candles.js';
 const fixture = readFileSync(new URL('./fixtures/ff_calendar.json', import.meta.url), 'utf8');
 const news = parseNews(fixture);
 
-test('northern winter sessions in SAST: 05:00–15:00 and 17:00–22:00', () => {
-  assert.equal(sessionAt(utc('2026-11-04T04:00:00Z')), 'Late Asia');   // 06:00 SAST
-  assert.equal(sessionAt(utc('2026-11-04T09:00:00Z')), 'London');      // 11:00 SAST
-  assert.equal(sessionAt(utc('2026-11-04T14:00:00Z')), null);          // 16:00 SAST, NY open
-  assert.equal(sessionAt(utc('2026-11-04T16:00:00Z')), 'London');      // 18:00 SAST
-  assert.equal(sessionAt(utc('2026-11-04T19:00:00Z')), 'New York');    // 21:00 SAST
-  assert.equal(sessionAt(utc('2026-11-04T20:30:00Z')), null);          // 22:30 SAST, late NY
-  assert.equal(sessionAt(utc('2026-11-04T01:00:00Z')), null);          // 03:00 SAST, early Asia
-});
-
-test('northern summer: New York exclusions shift an hour earlier in SAST', () => {
-  assert.equal(sessionAt(utc('2026-07-01T13:00:00Z')), null);      // 15:00 SAST = 09:00 NY (EDT), NY open
-  assert.equal(sessionAt(utc('2026-07-01T14:30:00Z')), 'London');  // 16:30 SAST = 10:30 NY, allowed
+test('sessions: every hour except 00:00–05:00 SAST', () => {
+  assert.equal(sessionAt(utc('2026-11-04T03:00:00Z')), 'Asia');      // 05:00 SAST
+  assert.equal(sessionAt(utc('2026-11-04T09:00:00Z')), 'London');    // 11:00 SAST
+  assert.equal(sessionAt(utc('2026-11-04T14:00:00Z')), 'New York');  // 16:00 SAST
+  assert.equal(sessionAt(utc('2026-11-04T21:45:00Z')), 'New York');  // 23:45 SAST
+  assert.equal(sessionAt(utc('2026-11-04T22:00:00Z')), null);        // 00:00 SAST
+  assert.equal(sessionAt(utc('2026-11-04T02:45:00Z')), null);        // 04:45 SAST
 });
 
 test('market week: closed Saturday, opens Sunday 17:00 New York', () => {

@@ -100,6 +100,11 @@ DAs never block a normal alert. They add warnings: **entry inside a DA**, **sell
 
 `node scripts/calibrate.js AUDUSD 3` prints the current DAs, so you can compare them with your own.
 
+## Trading hours and trend rule
+
+- **Hours:** alerts form at any time **except 00:00–05:00 SAST**. The session name in an alert (Asia / London / New York) is only a label. Red-folder news still mutes ±30 minutes.
+- **Trend:** with the 4H, 1 BOS on the 15m is enough. A single 15m BOS against the 4H counts as a **pullback**, so trades with the 4H stay valid. The alert then says "aligned — 1 BOS against = pullback". Trading against the 4H still needs 2 BOS in a row.
+
 ## Reporting your own trades (#05TP / #05SL)
 
 Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP` or `#05SL` (`#5 tp` works too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it.

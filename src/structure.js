@@ -60,6 +60,8 @@ export function analyze(candles, tf) {
 
 // Aligned with the 4H: one BOS is enough. Against (or unknown) 4H: two consecutive BOS.
 export function isValid(dir, internal, external) {
+  // A single 15m BOS against the 4H is only a pullback, so trades with the 4H stay valid.
+  if (external.dir === dir && internal.dir && internal.dir !== dir && internal.count === 1) return true;
   if (internal.dir !== dir) return false;
   return external.dir === dir ? internal.count >= 1 : internal.count >= 2;
 }

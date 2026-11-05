@@ -51,6 +51,12 @@ test('AE1: aligned with 4H, one BOS is enough', () => {
   assert.equal(isValid('bull', { dir: 'bull', count: 1 }, { dir: 'bull', count: 3 }), true);
 });
 
+test('one 15m BOS against the 4H is a pullback: trades with the 4H stay valid', () => {
+  assert.equal(isValid('bear', { dir: 'bull', count: 1 }, { dir: 'bear', count: 2 }), true);
+  assert.equal(isValid('bear', { dir: 'bull', count: 2 }, { dir: 'bear', count: 2 }), false);
+  assert.equal(isValid('bull', { dir: 'bull', count: 1 }, { dir: 'bear', count: 2 }), false);
+});
+
 test('AE2: against the 4H needs two consecutive BOS', () => {
   assert.equal(isValid('bull', { dir: 'bull', count: 1 }, { dir: 'bear', count: 2 }), false);
   assert.equal(isValid('bull', { dir: 'bull', count: 2 }, { dir: 'bear', count: 2 }), true);

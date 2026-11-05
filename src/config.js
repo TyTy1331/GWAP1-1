@@ -8,16 +8,14 @@ export const config = {
   displayZone: 'Africa/Johannesburg',
 
   // Alerts form only inside an allowed window and outside every excluded window.
+  // Your choice (2026-11-05): every hour except 00:00–05:00 SAST. Names are just labels in the alerts.
   sessions: {
     allowed: [
-      { name: 'Late Asia', zone: 'Asia/Tokyo', start: '12:00', end: '17:00' },
-      { name: 'London', zone: 'Europe/London', start: '08:00', end: '17:00' },
-      { name: 'New York', zone: 'America/New_York', start: '08:00', end: '17:00' },
+      { name: 'Asia', zone: 'Africa/Johannesburg', start: '05:00', end: '10:00' },
+      { name: 'London', zone: 'Africa/Johannesburg', start: '10:00', end: '15:00' },
+      { name: 'New York', zone: 'Africa/Johannesburg', start: '15:00', end: '24:00' },
     ],
-    excluded: [
-      { name: 'NY open', zone: 'America/New_York', start: '08:00', end: '10:00' },
-      { name: 'Late NY', zone: 'America/New_York', start: '15:00', end: '17:00' },
-    ],
+    excluded: [],
   },
   // Forex week: Sunday 17:00 to Friday 17:00 New York time.
   marketZone: 'America/New_York',
