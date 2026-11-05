@@ -37,6 +37,8 @@ export const config = {
   voidLookback: 40,
   conflictLookback: 20,
   staleMinutes: 10,
+  quietFailMinutes: 30,  // feed hiccups only reach Telegram once a pair is this far behind (it catches up by itself)
+  inboxFailRuns: 3,      // ...and Telegram-reply read errors after this many failed runs in a row
   dataGapToleranceMinutes: 15, // covers the daily 17:00 NY rollover break
   newsMuteMinutes: 30,
   newsAheadMinutes: 120,

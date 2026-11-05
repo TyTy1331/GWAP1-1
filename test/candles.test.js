@@ -23,6 +23,14 @@ test('credentials need both secrets', () => {
   assert.equal(warnings.length, 1);
 });
 
+test('a timeout is retried once before failing', async () => {
+  let calls = 0;
+  const getCandles = async () => { if (++calls === 1) throw new Error('timed out'); return [{ time: 0, open: 1, high: 1, low: 1, close: 1 }]; };
+  const out = await fetchCandles({ pair: 'OANDA:AUDUSD', tf: 60, count: 1, now: 120, getCandles });
+  assert.equal(out.length, 1);
+  assert.equal(calls, 2);
+});
+
 test('empty or failing feed raises FeedError without credentials in the message', async () => {
   const opts = { pair: config.pairs[0], tf: 60, count: 5, now: 1e9, credentials: { session: 'SECRET' } };
   await assert.rejects(fetchCandles({ ...opts, getCandles: async () => [] }), FeedError);

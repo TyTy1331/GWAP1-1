@@ -133,12 +133,15 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       }
       const ps = state.pairs[pair];
       if (ps.last1m >= until) continue;
+      // One failed run is harmless (the next run replays what it missed), so only a long stall is reported.
+      const stuck = () => marketMinutesBetween(ps.last1m, now) > config.quietFailMinutes;
       try {
         const get = (tf, count) => fetchCandles({ pair, tf, count, now, credentials, getCandles });
         const m1 = await get(TF.M1, 500);
         if (open && !isFresh(m1, now)) {
-          const brk = instrument(pair).dailyBreak; // e.g. NAS100's daily close: no candles is normal
-          if (!(brk && inWindow(now, brk))) warnOnce(state, `stale:${pair}`, now, `TradingView data for ${pair} is stale; alerts paused for this pair.`);
+          const brk = instrument(pair).dailyBreak; // e.g. an index's daily close: no candles is normal
+          if (stuck() && !(brk && inWindow(now, brk))) warnOnce(state, `stale:${pair}`, now, `TradingView data for ${pair} has been stale for ${config.quietFailMinutes}+ min; alerts paused for this pair.`);
+          else log(`${pair}: data stale, will retry next run`);
           continue;
         }
         latestData = Math.max(latestData ?? 0, m1.at(-1).time + 60);
@@ -151,14 +154,21 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
         log(`${pair}: ${events.length} event(s), ${skipped.length} no-wick(s) skipped`);
       } catch (e) {
         if (!(e instanceof FeedError)) throw e;
-        warnOnce(state, `feed:${pair}`, now, e.message);
+        if (stuck()) warnOnce(state, `feed:${pair}`, now, `${e.message} (no new data for ${config.quietFailMinutes}+ min)`);
+        else log(`${pair}: ${e.message} — will retry next run`);
       }
     }
 
     if (token && chatId && env.DRY_RUN !== '1') {
       try {
         for (const r of await readInbox(state, { token, chatId, fetchFn, now })) enqueue(state, r.id, r.text);
-      } catch (e) { warnOnce(state, 'inbox', now, `Could not read Telegram replies (${e.message}).`); }
+        state.inboxFails = 0;
+      } catch (e) {
+        // Unread replies wait on Telegram for 24h, so a blip loses nothing; warn only if it keeps failing.
+        state.inboxFails = (state.inboxFails ?? 0) + 1;
+        if (state.inboxFails >= config.inboxFailRuns) warnOnce(state, 'inbox', now, `Could not read Telegram replies for ${state.inboxFails} runs in a row (${e.message}).`);
+        else log(`Telegram replies not read (${e.message}); will retry next run`);
+      }
     }
 
     if (open) {

@@ -163,6 +163,22 @@ test('skipped setups never carry a trade number, even from older state', async (
   assert.equal(real.num, 12);
 });
 
+test('a feed timeout stays quiet unless the pair is 30+ min behind', async () => {
+  const now = utc('2026-11-04T09:07:30Z');
+  const failing = async () => { throw new Error('timed out after 20000 ms'); };
+  const run = async (behindMin) => {
+    const { STATE_PATH } = setupRun(now, (s) => {
+      s.lastCheckin = '2026-11-04';
+      for (const p of ['OANDA:AUDUSD', 'OANDA:GBPUSD', 'OANDA:AUDJPY']) s.pairs[p] = { last1m: now - behindMin * 60, last15: now - behindMin * 60 };
+    });
+    const logs = [];
+    await runOnce({ now, env: { STATE_PATH, DRY_RUN: '1' }, getCandles: failing, fetchFn: okNews, log: (l) => logs.push(l) });
+    return logs.filter((l) => l.startsWith('--- warn:feed')).length;
+  };
+  assert.equal(await run(5), 0);
+  assert.equal(await run(40), 3);
+});
+
 test('weekend: catches up to the Friday close, then sends the recap once', async () => {
   const close = utc('2026-11-06T22:00:00Z');
   const now = close + 600; // Fri 17:10 NY

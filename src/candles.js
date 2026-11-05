@@ -35,11 +35,15 @@ async function lib() {
 export async function fetchCandles({ pair, tf, count, now, credentials, getCandles }) {
   const query = { symbol: pair, timeframe: TV_TF[tf], count, credentials, timeoutMs: 20000 };
   let raw;
-  try {
-    raw = await (getCandles ?? (await lib()))(query);
-  } catch (e) {
-    // Library errors never carry credentials; keep only the message text.
-    throw new FeedError(`TradingView ${pair} ${TV_TF[tf]}: ${String(e?.message ?? e).slice(0, 200)}`);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      raw = await (getCandles ?? (await lib()))(query);
+      break;
+    } catch (e) {
+      if (attempt < 2) continue; // TradingView often times out once; the second try usually works
+      // Library errors never carry credentials; keep only the message text.
+      throw new FeedError(`TradingView ${pair} ${TV_TF[tf]}: ${String(e?.message ?? e).slice(0, 200)}`);
+    }
   }
   if (!raw?.length) throw new FeedError(`TradingView returned no ${TV_TF[tf]} candles for ${pair}`);
   return normalize(raw, tf, now);
