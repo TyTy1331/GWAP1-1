@@ -105,6 +105,18 @@ DAs never block a normal alert. They add warnings: **entry inside a DA**, **sell
 - **Hours:** alerts form at any time **except 00:00–05:00 SAST**. The session name in an alert (Asia / London / New York) is only a label. Red-folder news still mutes ±30 minutes.
 - **Trend:** with the 4H, 1 BOS on the 15m is enough. A single 15m BOS against the 4H counts as a **pullback**, so trades with the 4H stay valid. The alert then says "aligned — 1 BOS against = pullback". Trading against the 4H still needs 2 BOS in a row.
 
+## How stops and warnings work
+
+- **Stop:** 1 pip beyond the latest swing high (sells) or swing low (buys), so the risk changes with the structure.
+- **Deeper pullback:** if an earlier no-wick in the same direction is still untapped, still inside its 9-candle window, and sits inside that stop, price will probably go there first. The stop then moves beyond the swing that protected that earlier no-wick, and the alert says so.
+- **Warnings never block an alert.** They flag things for you:
+  - unfilled voids against the trade (a slow push of 5+ candles, or a fast one of 3+ candles covering 10+ pips)
+  - untapped same-direction no-wicks on the stop side
+  - conflicting no-wicks
+  - TP beyond a swing
+  - large stops
+  - decision areas
+
 ## Reporting your own trades (#05TP / #05SL)
 
 Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP` or `#05SL` (`#5 tp` works too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it.

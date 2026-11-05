@@ -26,6 +26,8 @@ export const config = {
   stopBufferPips: 1.0,
   largeStopPips: 20,
   voidMinRun: 5,
+  voidFastRun: 3,       // ...or a fast push: this many candles covering voidFastPips
+  voidFastPips: 10,
   voidLookback: 40,
   conflictLookback: 20,
   staleMinutes: 10,

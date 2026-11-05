@@ -95,6 +95,8 @@ export function processPair(state, pair, data, until, news) {
         const candles = upToHere(it.list, it.i);
         // DA plays keep their stop beyond the decision area.
         const built = l.playType ? null : buildSetup({ dir: l.dir, candles, swings: aHigher[it.tf].swings, tf: it.tf, recentLevels: recentNoWicks(candles) });
+        // Voids are price areas: keep the ones the 15m alert already flagged.
+        if (built) built.warnings.push(...l.setup.warnings.filter((w) => w.startsWith('Unfilled void') && !built.warnings.includes(w)));
         const setup = built ? applyDA(built, l.dir, dasAt(it.t)) : l.setup;
         upgrade(l, it.tf, it.c, setup);
         if (!l.shadow) events.push({ kind: 'upgrade', id: `${l.id}:up${it.tf}`, level: l, time: it.t });

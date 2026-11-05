@@ -83,5 +83,37 @@ test('recentNoWicks lists only untapped levels', () => {
   // bear no-wick at 0.7 never revisited; bull no-wick at 0.6985 tapped by the next candle; last candle is the setup's own
   const candles = seq(0, TF, [[0.7, 0.7, 0.699, 0.6995], move(0.6995, 0.699), [0.6985, 0.6992, 0.6985, 0.699], move(0.699, 0.6982), move(0.6982, 0.6986), move(0.6986, 0.6988)]);
   const levels = recentNoWicks(candles);
-  assert.deepEqual(levels, [{ dir: 'bear', level: 0.7 }]);
+  assert.deepEqual(levels, [{ dir: 'bear', level: 0.7, time: 0, age: 5 }]);
+});
+
+test('deeper pullback: an untapped same-direction no-wick inside the stop moves the stop beyond its swing', () => {
+  const candles = withNoWick(flat, [0.7, 0.7, 0.6992, 0.6994]); // sell at 0.7000
+  const sw = [swing('high', 1 * TF, 0.703), swing('high', 4 * TF, 0.7004)];
+  const s = buildSetup({ dir: 'bear', candles, swings: sw, tf: TF, recentLevels: [{ dir: 'bear', level: 0.7004 }] });
+  assert.equal(s.stop, 0.7031);
+  assert.ok(s.warnings[0].startsWith('Untapped bearish no-wick at 0.7004 sat inside the normal stop'), s.warnings.join('|'));
+  const normal = buildSetup({ dir: 'bear', candles, swings: sw, tf: TF });
+  assert.equal(normal.stop, 0.7005);
+});
+
+test('untapped same-direction no-wick beyond the stop only warns', () => {
+  const candles = withNoWick(flat, [0.7, 0.7, 0.6992, 0.6994]);
+  const s = buildSetup({ dir: 'bear', candles, swings: [swing('high', 2 * TF, 0.701)], tf: TF, recentLevels: [{ dir: 'bear', level: 0.7015 }] });
+  assert.equal(s.stop, 0.7011);
+  assert.ok(s.warnings.includes('Untapped bearish no-wick above at 0.7015 — price may pull back to it'), s.warnings.join('|'));
+});
+
+test('a fast 3-candle push of 10+ pips counts as a void', () => {
+  const push = [[0.6980, 0.6985, 0.6979, 0.6984], [0.6984, 0.6989, 0.6983, 0.6988], [0.6988, 0.6993, 0.6987, 0.6992]];
+  const candles = withNoWick([...flat.slice(0, 3), ...push, move(0.6992, 0.7)], [0.7, 0.7008, 0.7, 0.7006]);
+  const s = buildSetup({ dir: 'bull', candles, swings: [swing('low', 0, 0.6975)], tf: TF });
+  assert.ok(s.warnings.some((w) => w.startsWith('Unfilled void against the trade at 0.698–0.7')), s.warnings.join('|'));
+});
+
+test('an expired same-direction no-wick inside the stop does not move it, only warns', () => {
+  const candles = withNoWick(flat, [0.7, 0.7, 0.6992, 0.6994]);
+  const sw = [swing('high', 1 * TF, 0.703), swing('high', 4 * TF, 0.7004)];
+  const s = buildSetup({ dir: 'bear', candles, swings: sw, tf: TF, recentLevels: [{ dir: 'bear', level: 0.7004, time: 0, age: 12 }] });
+  assert.equal(s.stop, 0.7005);
+  assert.ok(s.warnings.includes('Untapped bearish no-wick above at 0.7004 — price may pull back to it'));
 });
