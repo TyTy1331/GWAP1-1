@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalize, isFresh, credentialsFromEnv, fetchCandles, FeedError } from '../src/candles.js';
-import { config } from '../src/config.js';
+import { config, instrument } from '../src/config.js';
 
 test('drops the still-forming candle, keeps one closed exactly now; ms → s', () => {
   const now = 1793817120;
@@ -30,7 +30,17 @@ test('empty or failing feed raises FeedError without credentials in the message'
     (e) => e instanceof FeedError && !e.message.includes('SECRET'));
 });
 
-test('config lists both pairs and valid zones', () => {
-  assert.deepEqual(config.pairs, ['OANDA:AUDUSD', 'OANDA:GBPUSD']);
-  for (const w of [...config.sessions.allowed, ...config.sessions.excluded]) assert.doesNotThrow(() => new Intl.DateTimeFormat('en', { timeZone: w.zone }));
+test('config lists the four instruments and valid zones', () => {
+  assert.deepEqual(config.pairs, ['OANDA:AUDUSD', 'OANDA:GBPUSD', 'OANDA:AUDJPY', 'FX:NAS100']);
+  const zones = [...config.sessions.allowed, ...config.sessions.excluded, ...Object.values(config.instruments).map((i) => i.dailyBreak).filter(Boolean)];
+  for (const w of zones) assert.doesNotThrow(() => new Intl.DateTimeFormat('en', { timeZone: w.zone }));
+});
+
+test('instrument settings: forex default, JPY pip, NAS100 in 10-point steps with USD news', () => {
+  assert.deepEqual([instrument('OANDA:AUDUSD').pip, instrument('OANDA:AUDUSD').unit], [0.0001, 0.0001]);
+  assert.deepEqual(instrument('OANDA:AUDJPY').currencies, ['AUD', 'JPY']);
+  assert.equal(instrument('OANDA:AUDJPY').pip, 0.01);
+  const nas = instrument('FX:NAS100');
+  assert.deepEqual([nas.pip, nas.unit, nas.name, nas.currencies], [1, 10, 'pts', ['USD']]);
+  assert.deepEqual(normalize([{ time: 0, open: 27122.030000000002, high: 27130, low: 27120, close: 27125 }], 60, 120)[0].open, 27122.03);
 });

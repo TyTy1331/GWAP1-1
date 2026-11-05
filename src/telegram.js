@@ -1,4 +1,4 @@
-import { config, TF_LABEL } from './config.js';
+import { config, TF_LABEL, instrument } from './config.js';
 import { localParts } from './filters.js';
 
 export const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -20,7 +20,7 @@ function setupLines(l) {
   return [
     `Entry: <b>${s.entry}</b> (limit at the no-wick open)`,
     `Stop: ${s.stop} (${l.playType === 'da' ? 'beyond the DA' : 'structure'})${s.altStop !== null ? ` · alt ${s.altStop} (prev candle)` : ''}`,
-    `TP: ${s.tp} (1:1) · Risk ${s.riskPips} pips`,
+    `TP: ${s.tp} (1:1) · Risk ${s.riskPips} ${instrument(l.pair).name}`,
   ];
 }
 

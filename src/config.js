@@ -3,8 +3,18 @@ export const TF = { M1: 60, M15: 900, M30: 1800, H1: 3600, H4: 14400 };
 export const TF_LABEL = { 60: '1m', 900: '15m', 1800: '30m', 3600: '1H', 14400: '4H' };
 
 export const config = {
-  pairs: ['OANDA:AUDUSD', 'OANDA:GBPUSD'],
+  pairs: ['OANDA:AUDUSD', 'OANDA:GBPUSD', 'OANDA:AUDJPY', 'FX:NAS100'], // FX: is FXCM's feed on TradingView
   pip: 0.0001,
+  // Per-instrument overrides. pip: the unit risk is shown in. scale: every pip-based threshold
+  // (stop buffer, voids, large stop, decision areas) is multiplied by this, so NAS100 uses 10-point steps.
+  instruments: {
+    'OANDA:AUDJPY': { pip: 0.01 },
+    'FX:NAS100': {
+      pip: 1, scale: 10, unit: 'pts', currencies: ['USD'],
+      dailyBreak: { zone: 'America/New_York', start: '16:45', end: '18:00' }, // CFD closes 17:00–18:00 NY (Fri 16:45)
+      gapToleranceMinutes: 80,
+    },
+  },
   displayZone: 'Africa/Johannesburg',
 
   // Alerts form only inside an allowed window and outside every excluded window.
@@ -61,3 +71,14 @@ export const currencies = (pair) => {
   const s = pair.split(':').pop();
   return [s.slice(0, 3), s.slice(3, 6)];
 };
+
+// pip: display unit; unit: price step for pip-based thresholds; name: label for risk.
+export function instrument(pair) {
+  const i = config.instruments[pair] ?? {}, pip = i.pip ?? config.pip;
+  return {
+    pip, unit: pip * (i.scale ?? 1), name: i.unit ?? 'pips',
+    currencies: i.currencies ?? (pair ? currencies(pair) : []),
+    gapToleranceMinutes: i.gapToleranceMinutes ?? config.dataGapToleranceMinutes,
+    dailyBreak: i.dailyBreak ?? null,
+  };
+}

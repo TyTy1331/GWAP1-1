@@ -1,10 +1,10 @@
 import { pathToFileURL } from 'node:url';
-import { config, TF } from './config.js';
+import { config, TF, instrument } from './config.js';
 import { fetchCandles, credentialsFromEnv, isFresh, FeedError } from './candles.js';
 import { noWickDir, upgradesLevel } from './nowick.js';
 import { analyze, trendAt, isValid } from './structure.js';
 import { buildSetup, recentNoWicks } from './setup.js';
-import { sessionAt, marketOpen, latestMarketClose, marketMinutesBetween, refreshNews, newsMute, upcomingNews } from './filters.js';
+import { sessionAt, marketOpen, latestMarketClose, marketMinutesBetween, refreshNews, newsMute, upcomingNews, inWindow } from './filters.js';
 import { newLevel, upgrade, advanceMinute, markDataGap, prune, breakEvenSignals } from './lifecycle.js';
 import { loadState, saveState } from './state.js';
 import { formatEvent, enqueue, deliver, TelegramError } from './telegram.js';
@@ -27,11 +27,11 @@ function warnOnce(state, key, now, text) {
 // Replays one pair's candles in time order: every 1m candle up to a higher-timeframe close
 // is processed before that close, so detection and upgrades always see earlier taps.
 export function processPair(state, pair, data, until, news) {
-  const ps = state.pairs[pair];
+  const ps = state.pairs[pair], inst = instrument(pair);
   const events = [], skipped = [];
   const { m1, m15, m30, h1, h4 } = data;
 
-  if (m1.length && m1[0].time > ps.last1m && marketMinutesBetween(ps.last1m, m1[0].time) > config.dataGapToleranceMinutes) {
+  if (m1.length && m1[0].time > ps.last1m && marketMinutesBetween(ps.last1m, m1[0].time) > inst.gapToleranceMinutes) {
     events.push(...markDataGap(state, pair, ps.last1m, m1[0].time));
   }
 
@@ -48,7 +48,7 @@ export function processPair(state, pair, data, until, news) {
   const aHigher = { [TF.M30]: m30 && analyze(m30, TF.M30), [TF.H1]: h1 && analyze(h1, TF.H1) };
   const upToHere = (list, i) => list.slice(Math.max(0, i - config.structureBars + 1), i + 1);
   const daCache = new Map();
-  const dasAt = (t) => { if (!daCache.has(t)) daCache.set(t, findDAs(m15, m30, t)); return daCache.get(t); };
+  const dasAt = (t) => { if (!daCache.has(t)) daCache.set(t, findDAs(m15, m30, t, inst.unit)); return daCache.get(t); };
 
   for (const it of items) {
     if (it.prio === 0) {
@@ -65,7 +65,7 @@ export function processPair(state, pair, data, until, news) {
       const internal = trendAt(a15.bos, it.t), external = trendAt(a4.bos, it.t);
       const candles = upToHere(m15, it.i), das = dasAt(it.t);
       const build = (stopAt) => {
-        const s = buildSetup({ dir, candles, swings: a15.swings, tf: TF.M15, recentLevels: recentNoWicks(candles), stopAt });
+        const s = buildSetup({ dir, candles, swings: a15.swings, tf: TF.M15, recentLevels: recentNoWicks(candles), stopAt, inst });
         return s && applyDA(s, dir, das);
       };
       let setup = build();
@@ -94,7 +94,7 @@ export function processPair(state, pair, data, until, news) {
         if (l.pair !== pair || l.tf >= it.tf || !upgradesLevel(l, it.c)) continue;
         const candles = upToHere(it.list, it.i);
         // DA plays keep their stop beyond the decision area.
-        const built = l.playType ? null : buildSetup({ dir: l.dir, candles, swings: aHigher[it.tf].swings, tf: it.tf, recentLevels: recentNoWicks(candles) });
+        const built = l.playType ? null : buildSetup({ dir: l.dir, candles, swings: aHigher[it.tf].swings, tf: it.tf, recentLevels: recentNoWicks(candles), inst });
         // Voids are price areas: keep the ones the 15m alert already flagged.
         if (built) built.warnings.push(...l.setup.warnings.filter((w) => w.startsWith('Unfilled void') && !built.warnings.includes(w)));
         const setup = built ? applyDA(built, l.dir, dasAt(it.t)) : l.setup;
@@ -136,7 +136,11 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       try {
         const get = (tf, count) => fetchCandles({ pair, tf, count, now, credentials, getCandles });
         const m1 = await get(TF.M1, 500);
-        if (open && !isFresh(m1, now)) { warnOnce(state, `stale:${pair}`, now, `TradingView data for ${pair} is stale; alerts paused for this pair.`); continue; }
+        if (open && !isFresh(m1, now)) {
+          const brk = instrument(pair).dailyBreak; // e.g. NAS100's daily close: no candles is normal
+          if (!(brk && inWindow(now, brk))) warnOnce(state, `stale:${pair}`, now, `TradingView data for ${pair} is stale; alerts paused for this pair.`);
+          continue;
+        }
         latestData = Math.max(latestData ?? 0, m1.at(-1).time + 60);
         const data = { m1 };
         if (floorTo(until, TF.M15) > ps.last15) {
@@ -161,7 +165,7 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       const date = checkinDue(state, now);
       if (date) { state.lastCheckin = date; enqueue(state, `checkin:${date}`, checkinText(state, now, latestData ? now - latestData : NaN)); }
     } else if (until && state.lastRecap !== until
-      && config.pairs.every((p) => !state.pairs[p] || state.pairs[p].last1m >= until - 300)) {
+      && config.pairs.every((p) => !state.pairs[p] || state.pairs[p].last1m >= until - instrument(p).gapToleranceMinutes * 60)) { // NAS100 stops 15 min before forex
       state.lastRecap = until;
       const week = (t) => t > until - 7 * 86400 && t <= until;
       const alerted = (l, play) => !l.shadow && (l.playType ?? null) === play && week(l.formedClose);

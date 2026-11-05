@@ -100,6 +100,12 @@ DAs never block a normal alert. They add warnings: **entry inside a DA**, **sell
 
 `node scripts/calibrate.js AUDUSD 3` prints the current DAs, so you can compare them with your own.
 
+## Instruments
+
+The bot watches **AUDUSD, GBPUSD, AUDJPY** (OANDA) and **NAS100** (FXCM, called `FX:NAS100` on TradingView). To add or remove one, edit `pairs` in `src/config.js`.
+- **AUDJPY:** 1 pip = 0.01.
+- **NAS100:** risk is shown in points. Pip-based settings run in 10-point steps: a 10-point stop buffer, voids of 100+ points, and a "large stop" above 200 points. Red-folder **USD** news mutes it. Its daily close (00:00–01:00 SAST) doesn't trigger stale-data warnings.
+
 ## Trading hours and trend rule
 
 - **Hours:** alerts form at any time **except 00:00–05:00 SAST**. The session name in an alert (Asia / London / New York) is only a label. Red-folder news still mutes ±30 minutes.

@@ -3,10 +3,11 @@ import { isDoji } from './structure.js';
 import { noWickDir } from './nowick.js';
 
 const round5 = (x) => Math.round(x * 1e5) / 1e5;
-const pips = (d) => Math.round((Math.abs(d) / config.pip) * 10) / 10;
+const pips = (d, pip) => Math.round((Math.abs(d) / pip) * 10) / 10;
+const DEFAULT = { pip: config.pip, unit: config.pip, name: 'pips' };
 
 // Unfilled same-direction pushes on the stop side of entry (they pull price toward the stop).
-function voidsAgainst(dir, before, entry) {
+function voidsAgainst(dir, before, entry, unit) {
   const want = dir === 'bull' ? 'up' : 'down';
   const color = (c) => (c.close > c.open ? 'up' : c.close < c.open ? 'down' : 'flat');
   const out = [];
@@ -23,7 +24,7 @@ function voidsAgainst(dir, before, entry) {
     const start = i + opens.lastIndexOf(dir === 'bull' ? Math.min(...opens) : Math.max(...opens));
     const run = win.slice(start, end + 1);
     const first = run[0].open, last = run.at(-1).close;
-    const fast = run.length >= config.voidFastRun && Math.abs(last - first) >= config.voidFastPips * config.pip - 1e-9;
+    const fast = run.length >= config.voidFastRun && Math.abs(last - first) >= config.voidFastPips * unit - 1e-9;
     if (run.length >= config.voidMinRun || fast) {
       const rest = win.slice(start + 1); // any later trade back to the push's start fills it
       const filled = dir === 'bull' ? rest.some((c) => c.low <= first) : rest.some((c) => c.high >= first);
@@ -37,10 +38,11 @@ function voidsAgainst(dir, before, entry) {
 
 // candles: this timeframe's closed candles, ending with the no-wick candle. swings: from analyze().
 // stopAt: a price to put the stop beyond instead of the latest opposite swing (DA plays).
-export function buildSetup({ dir, candles, swings, tf, recentLevels = [], stopAt }) {
+// inst: instrument(pair) — pip sizes and labels.
+export function buildSetup({ dir, candles, swings, tf, recentLevels = [], stopAt, inst = DEFAULT }) {
   const nw = candles.at(-1);
   const entry = nw.open, isLong = dir === 'bull';
-  const buffer = config.stopBufferPips * config.pip;
+  const buffer = config.stopBufferPips * inst.unit;
 
   // Latest opposite swing beyond a price, confirmed by the close of the candle at `at`.
   const swingBeyond = (price, at = nw.time) => swings
@@ -71,18 +73,18 @@ export function buildSetup({ dir, candles, swings, tf, recentLevels = [], stopAt
   const prev = candles.slice(0, -1).reverse().find((c) => !isDoji(c));
   const alt = prev ? round5(isLong ? prev.low : prev.high) : null;
   const altStop = alt !== null && (isLong ? alt < entry : alt > entry) ? alt : null;
-  const riskPips = pips(entry - stop);
+  const riskPips = pips(entry - stop, inst.pip);
 
   const lo = Math.min(stop, tp), hi = Math.max(stop, tp);
   if (deeper.length) warnings.unshift(`Untapped ${word} no-wick at ${deeper.join(', ')} sat inside the normal stop — stop moved beyond the swing ${isLong ? 'low' : 'high'} at ${opposite.wick}`);
-  for (const v of voidsAgainst(dir, candles.slice(0, -1), entry)) warnings.push(`Unfilled void against the trade at ${v.from}–${v.to}`);
+  for (const v of voidsAgainst(dir, candles.slice(0, -1), entry, inst.unit)) warnings.push(`Unfilled void against the trade at ${v.from}–${v.to}`);
   for (const l of recentLevels) {
     if (l.dir !== dir && l.level > lo && l.level < hi) warnings.push(`Conflicting ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick at ${l.level}`);
   }
   const blocker = swings.find((s) => s.type === (isLong ? 'high' : 'low') && s.confirmedAt <= nw.time + tf
     && (isLong ? s.wick > entry && s.wick < tp : s.wick < entry && s.wick > tp));
   if (blocker) warnings.push(`TP is beyond a swing ${isLong ? 'high' : 'low'} at ${blocker.wick} — consider pulling TP in`);
-  if (riskPips > config.largeStopPips) warnings.push(`Large stop: ${riskPips} pips`);
+  if (Math.abs(entry - stop) > config.largeStopPips * inst.unit + 1e-9) warnings.push(`Large stop: ${riskPips} ${inst.name}`);
 
   return { entry, stop, altStop, tp, riskPips, warnings };
 }

@@ -1,4 +1,4 @@
-import { config, currencies } from './config.js';
+import { config, instrument } from './config.js';
 
 const fmtCache = new Map();
 function parts(t, zone) {
@@ -15,7 +15,7 @@ function parts(t, zone) {
 }
 
 const toMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
-const inWindow = (t, w) => { const m = parts(t, w.zone).minutes; return m >= toMin(w.start) && m < toMin(w.end); };
+export const inWindow = (t, w) => { const m = parts(t, w.zone).minutes; return m >= toMin(w.start) && m < toMin(w.end); };
 
 export const localParts = parts;
 
@@ -81,7 +81,7 @@ export async function refreshNews(cache, now, fetchFn = fetch) {
   }
 }
 
-const forPair = (events, pair) => { const c = currencies(pair); return events.filter((e) => c.includes(e.country)); };
+const forPair = (events, pair) => { const c = instrument(pair).currencies; return events.filter((e) => c.includes(e.country)); };
 
 export function newsMute(events, pair, t) {
   const w = config.newsMuteMinutes * 60;

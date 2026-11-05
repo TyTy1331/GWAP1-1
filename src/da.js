@@ -16,8 +16,8 @@ export function prevDayOpen(t) {
 }
 
 // 1-pip rows: each candle's volume spread evenly over its range, then smoothed over 3 rows.
-export function volumeProfile(candles) {
-  const pip = config.pip, raw = new Map();
+export function volumeProfile(candles, unit = config.pip) {
+  const pip = unit, raw = new Map();
   for (const c of candles) {
     const lo = Math.round(c.low / pip), hi = Math.round(c.high / pip);
     const v = (c.volume || 1) / (hi - lo + 1); // no volume from the feed → time-at-price
@@ -31,19 +31,19 @@ export function volumeProfile(candles) {
 }
 
 // Prices of rows that are local minima and thin compared with the busiest row on each side.
-export function valleys({ base, vol }) {
+export function valleys({ base, vol }, unit = config.pip) {
   const { valleyWindowPips: w, valleyRatio } = config.da, out = [];
   for (let i = 1; i < vol.length - 1; i++) {
     if (vol[i] > vol[i - 1] || vol[i] > vol[i + 1]) continue;
     const left = Math.max(...vol.slice(Math.max(0, i - w), i)), right = Math.max(...vol.slice(i + 1, i + 1 + w));
-    if (vol[i] <= valleyRatio * left && vol[i] <= valleyRatio * right) out.push(round5((base + i) * config.pip));
+    if (vol[i] <= valleyRatio * left && vol[i] <= valleyRatio * right) out.push(round5((base + i) * unit));
   }
   return out;
 }
 
 // Bard's checks on 30m candles: widen over fake-outs, no consolidation inside, enough big reactions.
-export function validate(zone, c30) {
-  const d = config.da, pip = config.pip;
+export function validate(zone, c30, unit = config.pip) {
+  const d = config.da, pip = unit;
   let { lo, hi } = zone;
   const side = (x) => (x > hi ? 1 : x < lo ? -1 : 0);
   for (let changed = true; changed;) {
@@ -76,23 +76,23 @@ export function validate(zone, c30) {
 }
 
 // Decision areas known at time t (a candle close), sorted low to high.
-export function findDAs(m15 = [], m30 = [], t) {
-  const d = config.da, half = d.zoneHalfPips * config.pip;
+export function findDAs(m15 = [], m30 = [], t, unit = config.pip) {
+  const d = config.da, half = d.zoneHalfPips * unit;
   const from = prevDayOpen(t);
   const prof = m15.filter((c) => c.time >= from && c.time + TF.M15 <= t);
   const c30 = m30.filter((c) => c.time >= t - d.validateDays * 86400 && c.time + TF.M30 <= t);
   if (prof.length < 8 || c30.length < 8) return [];
-  const zones = valleys(volumeProfile(prof))
-    .map((p) => validate({ lo: round5(p - half), hi: round5(p + half) }, c30))
+  const zones = valleys(volumeProfile(prof, unit), unit)
+    .map((p) => validate({ lo: round5(p - half), hi: round5(p + half) }, c30, unit))
     .filter(Boolean);
-  return spaced(zones);
+  return spaced(zones, unit);
 }
 
 // Zones closer than minGapPips: keep the one with more reactions. Returns low to high.
-export function spaced(zones) {
+export function spaced(zones, unit = config.pip) {
   const kept = [];
   for (const z of [...zones].sort((a, b) => b.reactions - a.reactions)) {
-    if (kept.every((k) => Math.abs(mid(k) - mid(z)) >= config.da.minGapPips * config.pip)) kept.push(z);
+    if (kept.every((k) => Math.abs(mid(k) - mid(z)) >= config.da.minGapPips * unit)) kept.push(z);
   }
   return kept.sort((a, b) => a.lo - b.lo);
 }

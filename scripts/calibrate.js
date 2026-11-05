@@ -1,6 +1,6 @@
 // Prints the bot's recent no-wicks and BOS calls in SAST, to compare against your TradingView chart.
 // Usage: node scripts/calibrate.js [AUDUSD|GBPUSD] [days=2]
-import { config, TF } from '../src/config.js';
+import { config, TF, instrument } from '../src/config.js';
 import { fetchCandles, credentialsFromEnv } from '../src/candles.js';
 import { analyze } from '../src/structure.js';
 import { processPair } from '../src/run.js';
@@ -9,7 +9,8 @@ import { freshState } from '../src/state.js';
 import { fmtTime } from '../src/telegram.js';
 import { findDAs, fmtZone } from '../src/da.js';
 
-const pair = `OANDA:${(process.argv[2] ?? 'AUDUSD').toUpperCase()}`;
+const arg = (process.argv[2] ?? 'AUDUSD').toUpperCase();
+const pair = config.pairs.find((p) => p.endsWith(`:${arg}`)) ?? `OANDA:${arg}`;
 const days = Number(process.argv[3] ?? 2);
 const now = Math.floor(Date.now() / 1000);
 const from = now - days * 86400;
@@ -35,7 +36,7 @@ console.log('\nNo-wicks skipped:');
 for (const s of skipped) console.log(`  ${fmtTime(s.time - TF.M15)} ${s.dir.toUpperCase()} @ ${s.level} — ${s.reason}`);
 
 console.log('\nDecision areas right now (compare with your volume-profile / hand-drawn zones):');
-const das = findDAs(m15, m30, now);
+const das = findDAs(m15, m30, now, instrument(pair).unit);
 for (const z of das) console.log(`  ${fmtZone(z)}  (${z.reactions} reactions in 7 days)`);
 if (!das.length) console.log('  none found');
 
