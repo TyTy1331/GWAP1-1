@@ -10,11 +10,11 @@ const level = {
   internal: { dir: 'bull', count: 2 }, external: { dir: 'bull', count: 1 }, session: 'London',
 };
 
-test('formation message carries the full checklist in SAST', () => {
+test('formation message names the trade and its confluences, not entry/stop/TP', () => {
   const text = formatEvent({ kind: 'formed', level }, { upcoming: [{ country: 'GBP', title: 'GDP <prelim>', t: utc('2026-11-04T11:00:00Z') }], newsUnavailable: true });
-  for (const s of ['GBPUSD 15m BUY', 'Entry: <b>1.3457', 'Stop: 1.3446', 'alt 1.345', 'TP: 1.3468', '11 pips',
-    '15m trend: bullish (2 BOS)', '4H: bullish (1 BOS) (aligned)', 'Session: London', '14:30 SAST', '⚠️ Unfilled void',
+  for (const s of ['GBPUSD 15m BUY', '15m trend: bullish (2 BOS)', '4H: bullish (1 BOS) (aligned)', 'Session: London', '14:30 SAST', '⚠️ Unfilled void',
     'GDP &lt;prelim&gt;', 'News check unavailable']) assert.ok(text.includes(s), `missing: ${s}\n${text}`);
+  for (const s of ['Entry', 'Stop', 'TP:', '1.3446', '1.3468']) assert.ok(!text.includes(s), `should not show: ${s}`);
 });
 
 test('no warnings means no warning lines', () => {

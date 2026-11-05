@@ -1,4 +1,4 @@
-import { config, TF_LABEL, instrument } from './config.js';
+import { config, TF_LABEL } from './config.js';
 import { localParts } from './filters.js';
 
 export const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -15,15 +15,7 @@ const head = (l) => `${tag(l.num) ? `${tag(l.num)} ` : ''}${esc(name(l.pair))}${
 const side = (dir) => (dir === 'bull' ? 'BUY' : 'SELL');
 const trend = (t) => (t.dir ? `${t.dir === 'bull' ? 'bullish' : 'bearish'} (${t.count} BOS)` : 'unclear');
 
-function setupLines(l) {
-  const s = l.setup;
-  return [
-    `Entry: <b>${s.entry}</b> (limit at the no-wick open)`,
-    `Stop: ${s.stop} (${l.playType === 'da' ? 'beyond the DA' : 'structure'})${s.altStop !== null ? ` · alt ${s.altStop} (prev candle)` : ''}`,
-    `TP: ${s.tp} (1:1) · Risk ${s.riskPips} ${instrument(l.pair).name}`,
-  ];
-}
-
+// Alerts name the trade and its confluences only; entry, stop and TP are the trader's call.
 export function formatEvent(e, ctx = {}) {
   const l = e.level;
   switch (e.kind) {
@@ -33,7 +25,6 @@ export function formatEvent(e, ctx = {}) {
         da ? `🧪 <b>DA PLAY (experimental) — ${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b>`
           : `🟡 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b> — ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick`,
         ...(da ? [`Counter-trend ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick after price held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : []),
-        ...setupLines(l),
         `15m trend: ${trend(l.internal)} · 4H: ${trend(l.external)}${l.external.dir === l.dir ? (l.internal.dir === l.dir ? ' (aligned)' : ' (aligned — 1 BOS against = pullback)') : da ? ' (against — DA play, 1 BOS)' : ' (against, 2 BOS rule met)'}`,
         `Session: ${esc(l.session)}`,
         `Tap window closes: ${fmtTime(l.deadline)}`,
@@ -47,15 +38,13 @@ export function formatEvent(e, ctx = {}) {
     }
     case 'upgrade':
       return [
-        `🔼 <b>${head(l)} ${side(l.dir)} upgraded to ${TF_LABEL[l.tf]}</b> (level ${l.level})`,
-        ...setupLines(l),
+        `🔼 <b>${head(l)} ${side(l.dir)} upgraded to ${TF_LABEL[l.tf]}</b>`,
         ...l.setup.warnings.map((w) => `⚠️ ${esc(w)}`),
         ...(l.setup.notes ?? []).map((n) => `ℹ️ ${esc(n)}`),
         `Tap window now closes: ${fmtTime(l.deadline)}`,
       ].join('\n');
     case 'tap':
-      return `🎯 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)} tapped</b> at ${fmtTime(e.time)} (${l.tapIndex}/${config.tapWindowCandles})\n`
-        + `Entry ${l.setup.entry} · Stop ${l.setup.stop} · TP ${l.setup.tp}`;
+      return `🎯 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)} tapped</b> at ${fmtTime(e.time)} (${l.tapIndex}/${config.tapWindowCandles})`;
     case 'result':
       return `${e.outcome === 'won' ? '✅' : '❌'} <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}: ${e.outcome === 'won' ? 'TP hit, +1R' : 'stopped out, −1R'}</b> at ${fmtTime(e.time)}`;
     case 'be': {

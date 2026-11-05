@@ -69,10 +69,10 @@ If the run fails with a TradingView error, GitHub's servers may be blocked from 
 
 | Message | Meaning |
 |---|---|
-| 🟡 BUY/SELL | A valid no-wick formed. Entry, stops, TP, trend, session, tap deadline and any warnings |
+| 🟡 BUY/SELL | A valid no-wick formed: trade number, pair, trend, session, tap deadline and any warnings. Entry, stop and TP are left to you |
 | 🧪 DA PLAY (experimental) | A counter-trend no-wick right after price held a **decision area** (see below). Only 1 BOS on the 15m against the 4H. Stop sits just beyond the DA. Tracked separately from normal setups |
 | ℹ️ | Good news on a setup, e.g. a decision area sits between entry and stop and protects it |
-| 🔼 upgraded | The 30m or 1H candle is also a no-wick. Stops and window recalculated on that timeframe |
+| 🔼 upgraded | The 30m or 1H candle is also a no-wick. Tap window recalculated on that timeframe |
 | 🎯 tapped | Price touched the level inside its 9-candle window ("2/9" = 2nd candle) |
 | ✅ / ❌ | TP or stop was hit first |
 | 🛡️ | A no-wick formed against your open trade. In profit: move the stop to break-even. In drawdown: move TP to break-even (Bard's rule) |
