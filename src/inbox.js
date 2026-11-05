@@ -1,11 +1,11 @@
 import { esc, tag } from './telegram.js';
 import { TF_LABEL } from './config.js';
 
-const REPORT = /#(\d{1,3})\s*(TP|SL)\b/gi;
+const REPORT = /#(\d{1,3})\s*(TP|SL|B\/?E)\b/gi;
 
-// "#05TP", "#5 sl", "#12 TP and #13SL" → [{num, outcome}]
+// "#05TP", "#5 sl", "#7BE", "#8 b/e", "#12 TP and #13SL" → [{num, outcome}]
 export function parseReports(text) {
-  return [...String(text).matchAll(REPORT)].map((m) => ({ num: Number(m[1]), outcome: m[2].toUpperCase() }));
+  return [...String(text).matchAll(REPORT)].map((m) => ({ num: Number(m[1]), outcome: m[2].toUpperCase().replace('/', '') }));
 }
 
 const label = (l) => `${tag(l.num)} ${l.pair.split(':').pop()} ${TF_LABEL[l.tf]} ${l.dir === 'bull' ? 'BUY' : 'SELL'}`;
@@ -16,7 +16,7 @@ export function applyReport(state, { num, outcome }, now) {
   if (!level) return `❓ No trade ${tag(num)} found. Only the last 14 days are kept.`;
   const changed = level.reported && level.reported !== outcome;
   Object.assign(level, { reported: outcome, reportedAt: now });
-  return `📝 ${esc(label(level))} ${changed ? 'changed to' : 'marked'} ${outcome === 'TP' ? 'TP ✅' : 'SL ❌'}. It will be in the weekly recap.`;
+  return `📝 ${esc(label(level))} ${changed ? 'changed to' : 'marked'} ${{ TP: 'TP ✅', SL: 'SL ❌', BE: 'B/E ➖' }[outcome]}. It will be in the weekly recap.`;
 }
 
 // Reads new messages sent to the bot. Only the configured chat can report trades; when the bot

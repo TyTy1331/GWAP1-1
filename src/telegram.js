@@ -42,7 +42,7 @@ export function formatEvent(e, ctx = {}) {
       for (const n of l.setup.notes ?? []) lines.push(`ℹ️ ${esc(n)}`);
       for (const n of ctx.upcoming ?? []) lines.push(`📅 ${esc(n.country)} ${esc(n.title)} at ${fmtTime(n.t)}`);
       if (ctx.newsUnavailable) lines.push('📅 News check unavailable — check the calendar yourself');
-      if (l.num) lines.push(`When your trade closes, reply <b>${tag(l.num)}TP</b> or <b>${tag(l.num)}SL</b>`);
+      if (l.num) lines.push(`When your trade closes, reply <b>${tag(l.num)}TP</b>, <b>${tag(l.num)}SL</b> or <b>${tag(l.num)}BE</b>`);
       return lines.join('\n');
     }
     case 'upgrade':

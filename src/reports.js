@@ -27,10 +27,13 @@ export function recapStats(results) {
 }
 
 function yourTrades(lines, label, reported) {
-  const tp = reported.filter((l) => l.reported === 'TP').length, sl = reported.length - tp;
-  lines.push(`<b>${label}</b>: ${tp} TP / ${sl} SL (${Math.round((100 * tp) / reported.length)}%)`);
+  const n = (o) => reported.filter((l) => l.reported === o).length;
+  const tp = n('TP'), sl = n('SL'), be = n('BE');
+  // Win rate counts TP vs SL only; break-evens are listed but neither win nor loss.
+  const rate = tp + sl ? ` (${Math.round((100 * tp) / (tp + sl))}%)` : '';
+  lines.push(`<b>${label}</b>: ${tp} TP / ${sl} SL${be ? ` / ${be} B/E` : ''}${rate}`);
   for (const l of [...reported].sort((a, b) => a.num - b.num)) {
-    lines.push(`${l.reported === 'TP' ? '✅' : '❌'} ${tag(l.num)} ${l.pair.split(':').pop()} ${TF_LABEL[l.tf]} ${l.dir === 'bull' ? 'BUY' : 'SELL'}`);
+    lines.push(`${{ TP: '✅', SL: '❌', BE: '➖' }[l.reported] ?? '❔'} ${tag(l.num)} ${l.pair.split(':').pop()} ${TF_LABEL[l.tf]} ${l.dir === 'bull' ? 'BUY' : 'SELL'}`);
   }
 }
 

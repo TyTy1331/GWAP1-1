@@ -11,6 +11,7 @@ test('parses #05TP, #5 sl and several reports in one message; ignores the rest',
   assert.deepEqual(parseReports('#05TP'), [{ num: 5, outcome: 'TP' }]);
   assert.deepEqual(parseReports('closed #5 sl, and #12 TP'), [{ num: 5, outcome: 'SL' }, { num: 12, outcome: 'TP' }]);
   assert.deepEqual(parseReports('05TP tp #TP #05 TPX'), []);
+  assert.deepEqual(parseReports('#7BE and #8 b/e'), [{ num: 7, outcome: 'BE' }, { num: 8, outcome: 'BE' }]);
 });
 
 test('report marks the trade; a second report corrects it; unknown numbers say so', () => {
@@ -20,6 +21,7 @@ test('report marks the trade; a second report corrects it; unknown numbers say s
   assert.equal(s.levels[0].reported, 'TP');
   assert.match(applyReport(s, { num: 5, outcome: 'SL' }, 2), /changed to SL/);
   assert.match(applyReport(s, { num: 9, outcome: 'TP' }, 3), /No trade #09/);
+  assert.match(applyReport(s, { num: 5, outcome: 'BE' }, 4), /changed to B\/E/);
 });
 
 // Behaves like Telegram: only returns updates at or after the requested offset.
@@ -48,6 +50,9 @@ test('being added to a group tells the configured chat that group\'s ID', async 
 test('recap lists your reported trades by number, plus bot tracking', () => {
   const text = recapText([{ outcome: 'won', pair: 'OANDA:AUDUSD', tf: 900 }], 3, [lvl(7, { reported: 'SL' }), lvl(5, { reported: 'TP' })]);
   assert.ok(text.includes('<b>Your trades</b>: 1 TP / 1 SL (50%)'));
+  const be = recapText([], 3, [lvl(7, { reported: 'SL' }), lvl(5, { reported: 'TP' }), lvl(6, { reported: 'BE' })]);
+  assert.ok(be.includes('<b>Your trades</b>: 1 TP / 1 SL / 1 B/E (50%)'), be);
+  assert.ok(be.includes('➖ #06'), be);
   assert.ok(text.indexOf('✅ #05') < text.indexOf('❌ #07'));
   assert.ok(text.includes('Bot tracking'));
 });
@@ -57,7 +62,7 @@ test('alerts carry the trade number and the reply hint', () => {
     setup: { entry: 0.7, stop: 0.7011, altStop: null, tp: 0.6989, riskPips: 11, warnings: [] }, tapIndex: 2 };
   const formed = formatEvent({ kind: 'formed', level });
   assert.ok(formed.includes('#05 AUDUSD 15m SELL'));
-  assert.ok(formed.includes('reply <b>#05TP</b> or <b>#05SL</b>'));
+  assert.ok(formed.includes('reply <b>#05TP</b>, <b>#05SL</b> or <b>#05BE</b>'));
   assert.ok(formatEvent({ kind: 'tap', level, time: 1500 }).includes('#05 AUDUSD'));
 });
 

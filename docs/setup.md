@@ -117,17 +117,17 @@ DAs never block a normal alert. They add warnings: **entry inside a DA**, **sell
   - large stops
   - decision areas
 
-## Reporting your own trades (#05TP / #05SL)
+## Reporting your own trades (#05TP / #05SL / #05BE)
 
-Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP` or `#05SL` (`#5 tp` works too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it.
+Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP`, `#05SL` or `#05BE` for break-even (`#5 tp` and `#5 b/e` work too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it.
 
-The weekly recap then shows **Your trades** (what you reported) separately from **Bot tracking** (whether the exact 1:1 levels were hit). Your results can differ from the bot's when you pre-enter, move to break-even, or pull TP in. Only the chat the alerts go to can report trades.
+The weekly recap then shows **Your trades** (what you reported; break-evens are listed but don't count toward the win rate) separately from **Bot tracking** (whether the exact 1:1 levels were hit). Your results can differ from the bot's when you pre-enter, move to break-even, or pull TP in. Only the chat the alerts go to can report trades.
 
 ## The trade journal (your data for analysis)
 
 Every 15m no-wick the bot sees is written to a monthly spreadsheet on the `bot-state` branch: `journal/2026-11.csv`, `journal/2026-12.csv`, and so on. That includes the ones it **skipped**, with the reason. Skipped ones are tracked silently (no alerts), so you can later see how they would have done. Journal files are never deleted.
 
-Each row has: number, whether it was alerted or skipped (and why), pair, timeframe, BUY/SELL, formation time (UTC and SAST), level, stop, alternative stop, TP, risk, 15m and 4H trend with BOS counts, session, warnings, upgrades, tap time and n/9, the bot's result (TP, SL, expired, unknown, no setup, plus whether news muted it), and your reported TP/SL. Decision-area columns: `play_type` (normal / da), the nearest DA below and above, `range_pos` (where entry sits between them, 0–100%), `in_da` and `tp_beyond_da`.
+Each row has: number, whether it was alerted or skipped (and why), pair, timeframe, BUY/SELL, formation time (UTC and SAST), level, stop, alternative stop, TP, risk, 15m and 4H trend with BOS counts, session, warnings, upgrades, tap time and n/9, the bot's result (TP, SL, expired, unknown, no setup, plus whether news muted it), and your reported TP/SL/BE. Decision-area columns: `play_type` (normal / da), the nearest DA below and above, `range_pos` (where entry sits between them, 0–100%), `in_da` and `tp_beyond_da`.
 
 A row appears once the setup finishes (TP, SL or expired) or when you report it.
 
