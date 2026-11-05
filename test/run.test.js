@@ -139,6 +139,17 @@ test('pasted secrets with stray spaces still work; a manual run confirms itself'
   assert.ok(Object.keys(read().sent)[0].startsWith('manual:'));
 });
 
+test('cron-job.org triggers do not post "Manual run OK"', async () => {
+  const now = utc('2026-11-04T09:07:30Z');
+  const { STATE_PATH, read } = setupRun(now, (s) => { s.lastCheckin = '2026-11-04'; });
+  const env = { STATE_PATH, DRY_RUN: '1', GITHUB_EVENT_NAME: 'workflow_dispatch', RUN_SOURCE: 'cron' };
+  const logs = [];
+  await runOnce({ now, env, getCandles: fakeCandles(now), fetchFn: okNews, log: (l) => logs.push(l) });
+  assert.ok(!logs.some((l) => l.includes('Manual run OK')));
+  await runOnce({ now: now + 300, env: { ...env, RUN_SOURCE: 'manual' }, getCandles: fakeCandles(now + 300), fetchFn: okNews, log: (l) => logs.push(l) });
+  assert.ok(logs.some((l) => l.includes('Manual run OK')));
+});
+
 test('weekend: catches up to the Friday close, then sends the recap once', async () => {
   const close = utc('2026-11-06T22:00:00Z');
   const now = close + 600; // Fri 17:10 NY

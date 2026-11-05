@@ -6,6 +6,10 @@ on:
     # Runs may still start late; the bot catches up by candle time.
     - cron: '2-59/5 * * * *'
   workflow_dispatch:
+    inputs:
+      source:
+        description: Who started the run (cron-job.org sends "cron"; clicks keep "manual")
+        default: manual
 
 permissions:
   contents: write
@@ -44,6 +48,7 @@ jobs:
           TV_SESSION: ${{ secrets.TV_SESSION }}
           TV_SIGNATURE: ${{ secrets.TV_SIGNATURE }}
           STATE_PATH: state/state.json
+          RUN_SOURCE: ${{ inputs.source }}
         run: node src/run.js
 
       - name: Save state

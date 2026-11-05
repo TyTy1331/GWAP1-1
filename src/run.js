@@ -149,7 +149,7 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       enqueue(state, `recap:${until}`, recapText(state.results.filter((r) => !r.shadow && week(r.closed)), alerts, reported));
     }
     prune(state, now);
-    if (env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
+    if (env.GITHUB_EVENT_NAME === 'workflow_dispatch' && env.RUN_SOURCE !== 'cron') { // cron-job.org triggers stay silent
       const live = state.levels.filter((l) => !l.shadow && (l.status === 'active' || l.status === 'tracking')).length;
       enqueue(state, `manual:${now}`, `✅ Manual run OK. Market ${open ? 'open' : 'closed'}, ${live} live level(s).`);
     }
