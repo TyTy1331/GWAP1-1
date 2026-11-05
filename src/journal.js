@@ -7,7 +7,7 @@ import { fmtTime, tag } from './telegram.js';
 const COLUMNS = ['id', 'number', 'alerted', 'skip_reason', 'pair', 'timeframe', 'direction', 'formed_utc', 'formed_sast',
   'level', 'stop', 'alt_stop', 'tp', 'risk_pips', 'trend_15m', 'bos_15m', 'trend_4h', 'bos_4h', 'session', 'warnings',
   'upgrades', 'tap_utc', 'tap_n', 'bot_result', 'muted_by_news', 'result_utc', 'reported', 'reported_utc',
-  'be_signal_utc', 'be_action', 'managed_result'];
+  'be_signal_utc', 'be_action', 'managed_result', 'play_type', 'da_below', 'da_above', 'range_pos', 'in_da', 'tp_beyond_da'];
 
 const FINAL = new Set(['won', 'lost', 'expired', 'unknown', 'nosetup']);
 const RESULT = { won: 'TP', lost: 'SL', expired: 'expired', unknown: 'unknown', nosetup: 'no setup', tracking: 'open', active: 'open' };
@@ -24,6 +24,7 @@ export function journalRow(l) {
     (s.warnings ?? []).join('; '), l.upgrades.map((tf) => TF_LABEL[tf]).join(';'), iso(l.tapTime), l.tapIndex ?? '',
     RESULT[l.status] ?? l.status, l.muted ? 'yes' : '', iso(l.resultTime), l.reported ?? '', iso(l.reportedAt),
     iso(l.beSignal?.time), l.beSignal ? (l.beSignal.mode === 'stop' ? 'stop to BE' : 'TP to BE') : '', l.managedResult ?? '',
+    l.playType ?? 'normal', s.da?.below, s.da?.above, s.da?.rangePos, s.da ? (s.da.inDA ? 'yes' : 'no') : '', s.da?.tpBeyond,
   ].map(cell).join(',');
 }
 

@@ -70,6 +70,8 @@ If the run fails with a TradingView error, GitHub's servers may be blocked from 
 | Message | Meaning |
 |---|---|
 | 🟡 BUY/SELL | A valid no-wick formed. Entry, stops, TP, trend, session, tap deadline and any warnings |
+| 🧪 DA PLAY (experimental) | A counter-trend no-wick right after price held a **decision area** (see below). Only 1 BOS on the 15m against the 4H. Stop sits just beyond the DA. Tracked separately from normal setups |
+| ℹ️ | Good news on a setup, e.g. a decision area sits between entry and stop and protects it |
 | 🔼 upgraded | The 30m or 1H candle is also a no-wick. Stops and window recalculated on that timeframe |
 | 🎯 tapped | Price touched the level inside its 9-candle window ("2/9" = 2nd candle) |
 | ✅ / ❌ | TP or stop was hit first |
@@ -82,6 +84,22 @@ Some runs in the Actions tab show as "cancelled". That's normal: GitHub drops a 
 
 Taps and results are checked on 1-minute candles each run. Because GitHub's scheduler often starts runs a few minutes late, alerts can arrive 5–15 minutes after the event. The message always says when it actually happened.
 
+## Decision areas (DAs)
+
+The bot finds Bard's decision areas by itself at every 15m close:
+1. It builds a **volume profile** from the previous trading day's open (17:00 New York / 00:00 SAST in winter) to now, in 1-pip rows. DAs sit at the **thin rows** between busy areas.
+2. It checks each thin row on the **30m chart over the past week**, the way Bard does by eye:
+   - at least 2 **big reactions** (10+ pips away within 4 candles)
+   - **no consolidation** inside (3+ closes in a row inside the zone drops it)
+   - a **fake-out** (a close through, then straight back) widens the zone to cover it, up to 6 pips. Past 6 pips the zone is dropped.
+   - zones closer than 15 pips: the one with more reactions wins
+
+DAs never block a normal alert. They add warnings: **entry inside a DA**, **selling near the bottom / buying near the top of the range** (between the DAs below and above), and **TP beyond a DA** (consider TP just before it).
+
+**🧪 DA plays** are a setup the normal rules would skip **only because of the trend** (e.g. 15m bullish ×1 against a bearish 4H). The bot alerts it when price touched a DA in the last 8 15m candles without closing through it, then printed the no-wick. Expect few of them. They get their own number, so `#07TP` works as usual. The weekly recap and journal (`play_type = da`) keep them separate, so they never mix into your main numbers. To switch DA-play alerts off but keep tracking them silently, set `alertPlays: false` in `src/config.js`. The bot's DA levels come from the feed's tick volume, so they can sit a pip or two off TradingView's profile.
+
+`node scripts/calibrate.js AUDUSD 3` prints the current DAs, so you can compare them with your own.
+
 ## Reporting your own trades (#05TP / #05SL)
 
 Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP` or `#05SL` (`#5 tp` works too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it.
@@ -92,7 +110,7 @@ The weekly recap then shows **Your trades** (what you reported) separately from 
 
 Every 15m no-wick the bot sees is written to a monthly spreadsheet on the `bot-state` branch: `journal/2026-11.csv`, `journal/2026-12.csv`, and so on. That includes the ones it **skipped**, with the reason. Skipped ones are tracked silently (no alerts), so you can later see how they would have done. Journal files are never deleted.
 
-Each row has: number, whether it was alerted or skipped (and why), pair, timeframe, BUY/SELL, formation time (UTC and SAST), level, stop, alternative stop, TP, risk, 15m and 4H trend with BOS counts, session, warnings, upgrades, tap time and n/9, the bot's result (TP, SL, expired, unknown, no setup, plus whether news muted it), and your reported TP/SL.
+Each row has: number, whether it was alerted or skipped (and why), pair, timeframe, BUY/SELL, formation time (UTC and SAST), level, stop, alternative stop, TP, risk, 15m and 4H trend with BOS counts, session, warnings, upgrades, tap time and n/9, the bot's result (TP, SL, expired, unknown, no setup, plus whether news muted it), and your reported TP/SL. Decision-area columns: `play_type` (normal / da), the nearest DA below and above, `range_pos` (where entry sits between them, 0–100%), `in_da` and `tp_beyond_da`.
 
 A row appears once the setup finishes (TP, SL or expired) or when you report it.
 

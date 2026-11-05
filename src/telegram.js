@@ -11,7 +11,7 @@ export function fmtTime(t) {
 
 const name = (pair) => pair.split(':').pop();
 export const tag = (num) => (num ? `#${String(num).padStart(2, '0')}` : '');
-const head = (l) => `${tag(l.num) ? `${tag(l.num)} ` : ''}${esc(name(l.pair))}`;
+const head = (l) => `${tag(l.num) ? `${tag(l.num)} ` : ''}${esc(name(l.pair))}${l.playType === 'da' ? ' 🧪' : ''}`;
 const side = (dir) => (dir === 'bull' ? 'BUY' : 'SELL');
 const trend = (t) => (t.dir ? `${t.dir === 'bull' ? 'bullish' : 'bearish'} (${t.count} BOS)` : 'unclear');
 
@@ -19,7 +19,7 @@ function setupLines(l) {
   const s = l.setup;
   return [
     `Entry: <b>${s.entry}</b> (limit at the no-wick open)`,
-    `Stop: ${s.stop} (structure)${s.altStop !== null ? ` · alt ${s.altStop} (prev candle)` : ''}`,
+    `Stop: ${s.stop} (${l.playType === 'da' ? 'beyond the DA' : 'structure'})${s.altStop !== null ? ` · alt ${s.altStop} (prev candle)` : ''}`,
     `TP: ${s.tp} (1:1) · Risk ${s.riskPips} pips`,
   ];
 }
@@ -28,14 +28,18 @@ export function formatEvent(e, ctx = {}) {
   const l = e.level;
   switch (e.kind) {
     case 'formed': {
+      const da = l.playType === 'da';
       const lines = [
-        `🟡 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b> — ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick`,
+        da ? `🧪 <b>DA PLAY (experimental) — ${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b>`
+          : `🟡 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b> — ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick`,
+        ...(da ? [`Counter-trend ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick after price held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : []),
         ...setupLines(l),
-        `15m trend: ${trend(l.internal)} · 4H: ${trend(l.external)}${l.external.dir === l.dir ? ' (aligned)' : ' (against, 2 BOS rule met)'}`,
+        `15m trend: ${trend(l.internal)} · 4H: ${trend(l.external)}${l.external.dir === l.dir ? ' (aligned)' : da ? ' (against — DA play, 1 BOS)' : ' (against, 2 BOS rule met)'}`,
         `Session: ${esc(l.session)}`,
         `Tap window closes: ${fmtTime(l.deadline)}`,
       ];
       for (const w of l.setup.warnings) lines.push(`⚠️ ${esc(w)}`);
+      for (const n of l.setup.notes ?? []) lines.push(`ℹ️ ${esc(n)}`);
       for (const n of ctx.upcoming ?? []) lines.push(`📅 ${esc(n.country)} ${esc(n.title)} at ${fmtTime(n.t)}`);
       if (ctx.newsUnavailable) lines.push('📅 News check unavailable — check the calendar yourself');
       if (l.num) lines.push(`When your trade closes, reply <b>${tag(l.num)}TP</b> or <b>${tag(l.num)}SL</b>`);
@@ -46,6 +50,7 @@ export function formatEvent(e, ctx = {}) {
         `🔼 <b>${head(l)} ${side(l.dir)} upgraded to ${TF_LABEL[l.tf]}</b> (level ${l.level})`,
         ...setupLines(l),
         ...l.setup.warnings.map((w) => `⚠️ ${esc(w)}`),
+        ...(l.setup.notes ?? []).map((n) => `ℹ️ ${esc(n)}`),
         `Tap window now closes: ${fmtTime(l.deadline)}`,
       ].join('\n');
     case 'tap':

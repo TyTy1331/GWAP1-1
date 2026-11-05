@@ -11,10 +11,10 @@ export function credentialsFromEnv(env = process.env, warn = () => {}) {
   return undefined;
 }
 
-// Normalizes to {time, open, high, low, close} in Unix seconds and drops the still-forming candle.
+// Normalizes to {time, open, high, low, close, volume} in Unix seconds and drops the still-forming candle.
 export function normalize(raw, tf, now) {
   return raw
-    .map((c) => ({ time: c.time > 1e12 ? Math.floor(c.time / 1000) : c.time, open: c.open, high: c.high, low: c.low, close: c.close }))
+    .map((c) => ({ time: c.time > 1e12 ? Math.floor(c.time / 1000) : c.time, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume ?? 0 }))
     .filter((c) => c.time + tf <= now);
 }
 

@@ -7,6 +7,7 @@ import { processPair } from '../src/run.js';
 import { refreshNews } from '../src/filters.js';
 import { freshState } from '../src/state.js';
 import { fmtTime } from '../src/telegram.js';
+import { findDAs, fmtZone } from '../src/da.js';
 
 const pair = `OANDA:${(process.argv[2] ?? 'AUDUSD').toUpperCase()}`;
 const days = Number(process.argv[3] ?? 2);
@@ -27,10 +28,16 @@ console.log('No-wicks the bot would alert on:');
 for (const e of events) {
   const l = e.level;
   const tag = e.kind === 'upgrade' ? `  ↳ upgraded to ${l.tf / 60}m` : `  ${fmtTime(l.candleOpen)} ${l.dir.toUpperCase()} @ ${l.level}`;
-  console.log(`${tag}  stop ${l.setup.stop} tp ${l.setup.tp}${l.setup.warnings.length ? `  [${l.setup.warnings.length} warning(s)]` : ''}`);
+  const play = l.playType === 'da' ? '  🧪 DA PLAY' : '';
+  console.log(`${tag}${play}  stop ${l.setup.stop} tp ${l.setup.tp}${l.setup.warnings.length ? `  [${l.setup.warnings.length} warning(s)]` : ''}`);
 }
 console.log('\nNo-wicks skipped:');
 for (const s of skipped) console.log(`  ${fmtTime(s.time - TF.M15)} ${s.dir.toUpperCase()} @ ${s.level} — ${s.reason}`);
+
+console.log('\nDecision areas right now (compare with your volume-profile / hand-drawn zones):');
+const das = findDAs(m15, m30, now);
+for (const z of das) console.log(`  ${fmtZone(z)}  (${z.reactions} reactions in 7 days)`);
+if (!das.length) console.log('  none found');
 
 const show = (label, list, tf) => {
   console.log(`\n${label} BOS events:`);

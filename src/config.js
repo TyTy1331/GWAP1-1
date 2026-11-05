@@ -38,6 +38,23 @@ export const config = {
   newsUrl: 'https://nfs.faireconomy.media/ff_calendar_thisweek.json',
   checkinHourLocal: 5,
   pruneDays: 14,
+
+  // Decision areas (src/da.js). Starting guesses; tune during calibration.
+  da: {
+    alertPlays: true,      // false = DA plays are only tracked silently in the journal
+    valleyRatio: 0.5,      // a valley row has at most this share of the busiest row on each side
+    valleyWindowPips: 10,
+    zoneHalfPips: 1,
+    validateDays: 7,       // 30m history used for Bard's checks
+    reactionPips: 10,
+    reactionCandles: 4,
+    minReactions: 2,
+    maxInsideCloses: 2,    // more consecutive 30m closes inside = consolidation
+    maxWidthPips: 6,       // widest a zone may grow over fake-outs
+    minGapPips: 15,        // closer zones: keep the one with more reactions
+    rangeEdgePct: 25,
+    playLookback: 8,       // 15m candles in which the DA touch must happen
+  },
 };
 
 export const currencies = (pair) => {

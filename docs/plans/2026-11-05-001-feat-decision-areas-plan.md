@@ -1,7 +1,7 @@
 ---
 title: "feat: Decision areas (warnings, DA-play alerts, journal)"
 type: feat
-status: active
+status: completed
 date: 2026-11-05
 origin: docs/brainstorms/2026-11-04-nowick-alert-bot-requirements.md
 ---

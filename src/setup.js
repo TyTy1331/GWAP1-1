@@ -35,12 +35,13 @@ function voidsAgainst(dir, before, entry) {
 }
 
 // candles: this timeframe's closed candles, ending with the no-wick candle. swings: from analyze().
-export function buildSetup({ dir, candles, swings, tf, recentLevels = [] }) {
+// stopAt: a price to put the stop beyond instead of the latest opposite swing (DA plays).
+export function buildSetup({ dir, candles, swings, tf, recentLevels = [], stopAt }) {
   const nw = candles.at(-1);
   const entry = nw.open, isLong = dir === 'bull';
   const buffer = config.stopBufferPips * config.pip;
 
-  const opposite = swings
+  const opposite = stopAt !== undefined ? { wick: stopAt } : swings
     .filter((s) => s.type === (isLong ? 'low' : 'high') && s.confirmedAt <= nw.time + tf && s.time < nw.time)
     .filter((s) => (isLong ? s.wick < entry : s.wick > entry))
     .sort((a, b) => b.time - a.time)[0];

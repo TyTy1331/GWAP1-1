@@ -11,6 +11,7 @@ import { formatEvent, enqueue, deliver, TelegramError } from './telegram.js';
 import { checkinDue, checkinText, recapText } from './reports.js';
 import { readInbox } from './inbox.js';
 import { syncJournal } from './journal.js';
+import { findDAs, applyDA, daPlayZone } from './da.js';
 import { dirname, join } from 'node:path';
 
 const nextNum = (state) => { const n = state.nextNum ?? 1; state.nextNum = n + 1; return n; };
@@ -46,6 +47,8 @@ export function processPair(state, pair, data, until, news) {
   const a15 = m15 && analyze(m15, TF.M15), a4 = h4 && analyze(h4, TF.H4);
   const aHigher = { [TF.M30]: m30 && analyze(m30, TF.M30), [TF.H1]: h1 && analyze(h1, TF.H1) };
   const upToHere = (list, i) => list.slice(Math.max(0, i - config.structureBars + 1), i + 1);
+  const daCache = new Map();
+  const dasAt = (t) => { if (!daCache.has(t)) daCache.set(t, findDAs(m15, m30, t)); return daCache.get(t); };
 
   for (const it of items) {
     if (it.prio === 0) {
@@ -58,16 +61,26 @@ export function processPair(state, pair, data, until, news) {
       const dir = noWickDir(it.c);
       if (!dir) continue;
       events.push(...breakEvenSignals(state, pair, it.c, dir, it.t));
-      const session = sessionAt(it.t);
+      const session = sessionAt(it.t), muted = newsMute(news.events, pair, it.t);
       const internal = trendAt(a15.bos, it.t), external = trendAt(a4.bos, it.t);
-      const candles = upToHere(m15, it.i);
-      const setup = buildSetup({ dir, candles, swings: a15.swings, tf: TF.M15, recentLevels: recentNoWicks(candles) });
+      const candles = upToHere(m15, it.i), das = dasAt(it.t);
+      const build = (stopAt) => {
+        const s = buildSetup({ dir, candles, swings: a15.swings, tf: TF.M15, recentLevels: recentNoWicks(candles), stopAt });
+        return s && applyDA(s, dir, das);
+      };
+      let setup = build();
+      const trendOnly = session && !muted && !isValid(dir, internal, external);
+      // DA play (experimental): counter-trend, but 1 BOS on the 15m and a held decision area behind entry.
+      const zone = trendOnly && internal.dir === dir ? daPlayZone(dir, candles, das) : null;
+      if (zone) setup = build(dir === 'bull' ? zone.lo : zone.hi);
       const reason = !session ? 'outside session'
-        : newsMute(news.events, pair, it.t) ? 'red-folder news'
-        : !isValid(dir, internal, external) ? `trend (15m ${internal.dir ?? '?'}×${internal.count}, 4H ${external.dir ?? '?'})`
+        : muted ? 'red-folder news'
+        : zone ? (config.da.alertPlays ? null : 'DA play (alerts off)')
+        : trendOnly ? `trend (15m ${internal.dir ?? '?'}×${internal.count}, 4H ${external.dir ?? '?'})`
         : !setup ? 'no opposite swing for a stop' : null;
       // Skipped no-wicks are still tracked silently (no alerts) so the journal shows how they would have done.
       const level = newLevel({ pair, tf: TF.M15, candle: it.c, dir, setup, internal, external, session: session ?? 'none', num: reason ? undefined : nextNum(state) });
+      if (zone) Object.assign(level, { playType: 'da', daZone: zone });
       state.levels.push(level);
       if (reason) {
         skipped.push({ time: it.t, dir, level: it.c.open, reason });
@@ -80,7 +93,9 @@ export function processPair(state, pair, data, until, news) {
       for (const l of state.levels) {
         if (l.pair !== pair || l.tf >= it.tf || !upgradesLevel(l, it.c)) continue;
         const candles = upToHere(it.list, it.i);
-        const setup = buildSetup({ dir: l.dir, candles, swings: aHigher[it.tf].swings, tf: it.tf, recentLevels: recentNoWicks(candles) }) ?? l.setup;
+        // DA plays keep their stop beyond the decision area.
+        const built = l.playType ? null : buildSetup({ dir: l.dir, candles, swings: aHigher[it.tf].swings, tf: it.tf, recentLevels: recentNoWicks(candles) });
+        const setup = built ? applyDA(built, l.dir, dasAt(it.t)) : l.setup;
         upgrade(l, it.tf, it.c, setup);
         if (!l.shadow) events.push({ kind: 'upgrade', id: `${l.id}:up${it.tf}`, level: l, time: it.t });
       }
@@ -147,9 +162,14 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       && config.pairs.every((p) => !state.pairs[p] || state.pairs[p].last1m >= until - 300)) {
       state.lastRecap = until;
       const week = (t) => t > until - 7 * 86400 && t <= until;
-      const alerts = state.levels.filter((l) => !l.shadow && week(l.formedClose)).length;
-      const reported = state.levels.filter((l) => l.reported && week(l.formedClose));
-      enqueue(state, `recap:${until}`, recapText(state.results.filter((r) => !r.shadow && week(r.closed)), alerts, reported));
+      const alerted = (l, play) => !l.shadow && (l.playType ?? null) === play && week(l.formedClose);
+      const section = (play) => ({
+        alerts: state.levels.filter((l) => alerted(l, play)).length,
+        reported: state.levels.filter((l) => l.reported && alerted(l, play)),
+        results: state.results.filter((r) => !r.shadow && (r.play ?? null) === play && week(r.closed)),
+      });
+      const main = section(null), da = section('da');
+      enqueue(state, `recap:${until}`, recapText(main.results, main.alerts, main.reported, da));
     }
     prune(state, now);
     if (env.GITHUB_EVENT_NAME === 'workflow_dispatch' && env.RUN_SOURCE !== 'cron') { // cron-job.org triggers stay silent

@@ -50,7 +50,7 @@ function resolve(l, outcome, t, results) {
   l.status = outcome === 'won' ? 'won' : 'lost';
   l.resultTime = t;
   l.managedResult ??= outcome === 'won' ? 'TP' : 'SL';
-  results.push({ id: l.id, pair: l.pair, tf: l.tf, dir: l.dir, outcome: l.muted ? 'muted' : outcome, formed: l.formedClose, tapped: l.tapTime, closed: t, ...(l.shadow ? { shadow: true } : {}) });
+  results.push({ id: l.id, pair: l.pair, tf: l.tf, dir: l.dir, outcome: l.muted ? 'muted' : outcome, formed: l.formedClose, tapped: l.tapTime, closed: t, ...(l.shadow ? { shadow: true } : {}), ...(l.playType ? { play: l.playType } : {}) });
   return l.muted ? [] : [{ kind: 'result', id: `${l.id}:result`, level: l, outcome, time: t }];
 }
 
@@ -82,7 +82,7 @@ export function advanceMinute(state, pair, c, newsEvents) {
 export function markDataGap(state, pair, from, to) {
   const hit = state.levels.filter((l) => l.pair === pair && (l.status === 'active' || l.status === 'tracking'));
   for (const l of hit) {
-    if (l.status === 'tracking') state.results.push({ id: l.id, pair, tf: l.tf, dir: l.dir, outcome: 'unknown', formed: l.formedClose, tapped: l.tapTime, closed: to, ...(l.shadow ? { shadow: true } : {}) });
+    if (l.status === 'tracking') state.results.push({ id: l.id, pair, tf: l.tf, dir: l.dir, outcome: 'unknown', formed: l.formedClose, tapped: l.tapTime, closed: to, ...(l.shadow ? { shadow: true } : {}), ...(l.playType ? { play: l.playType } : {}) });
     l.status = 'unknown';
   }
   return [{ kind: 'gap', id: `${pair}:gap:${from}`, pair, from, to, count: hit.filter((l) => !l.shadow).length, time: to }];
