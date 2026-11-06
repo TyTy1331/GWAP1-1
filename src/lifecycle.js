@@ -90,7 +90,8 @@ export function markDataGap(state, pair, from, to) {
 
 export function prune(state, now) {
   const cutoff = now - config.pruneDays * 86400;
-  state.levels = state.levels.filter((l) => l.status === 'active' || l.status === 'tracking' || l.formedClose > cutoff);
+  state.levels = state.levels.filter((l) => l.status === 'active' || l.status === 'tracking' || l.formedClose > cutoff
+    || (l.reported && l.formedClose > now - 90 * 86400)); // your reports feed /stats for 30 days
   for (const k of ['sent', 'failed']) {
     for (const [id, t] of Object.entries(state[k])) if (t < cutoff) delete state[k][id];
   }

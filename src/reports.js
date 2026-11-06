@@ -58,3 +58,40 @@ export function recapText(results, alertCount, reported = [], da = null) {
   }
   return lines.join('\n');
 }
+
+const pairName = (p) => p.split(':').pop();
+const pct = (w, l) => (w + l ? ` (${Math.round((100 * w) / (w + l))}%)` : '');
+
+// "3 TP / 1 SL / 1 B/E (75%)" for trades you reported.
+function tally(levels) {
+  const n = (o) => levels.filter((l) => l.reported === o).length;
+  const tp = n('TP'), sl = n('SL'), be = n('BE');
+  return `${tp} TP / ${sl} SL${be ? ` / ${be} B/E` : ''}${pct(tp, sl)}`;
+}
+
+function period(state, now, days, heading) {
+  const since = now - days * 86400;
+  const out = [`<b>${heading}</b>`];
+  for (const [label, play] of [['', null], ['🧪 DA plays: ', 'da']]) {
+    const mine = state.levels.filter((l) => !l.shadow && l.reported && (l.playType ?? null) === play && l.formedClose > since);
+    const bot = state.results.filter((r) => !r.shadow && (r.play ?? null) === play && r.closed > since);
+    if (play && !mine.length && !bot.length) continue;
+    out.push(`${label ? `${label}\n` : ''}You: ${mine.length ? tally(mine) : 'nothing reported'}`);
+    const pairs = [...new Set(mine.map((l) => l.pair))].sort();
+    if (pairs.length > 1) for (const p of pairs) out.push(`  • ${pairName(p)}: ${tally(mine.filter((l) => l.pair === p))}`);
+    const won = bot.filter((r) => r.outcome === 'won').length, lost = bot.filter((r) => r.outcome === 'lost').length;
+    out.push(`Bot (exact 1:1): ${won}W / ${lost}L${pct(won, lost)}`);
+  }
+  return out.join('\n');
+}
+
+// Reply to /stats: your reported trades and the bot's own tracking, last 7 and 30 days.
+export function statsText(state, now) {
+  const live = (s) => state.levels.filter((l) => !l.shadow && l.status === s).length;
+  return [
+    '📊 <b>Stats</b>',
+    period(state, now, 7, 'Last 7 days'),
+    period(state, now, 30, 'Last 30 days'),
+    `🟡 ${live('active')} alert(s) waiting for a tap · ${live('tracking')} running`,
+  ].join('\n\n');
+}

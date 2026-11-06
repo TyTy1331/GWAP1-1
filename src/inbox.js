@@ -1,5 +1,6 @@
 import { esc, tag } from './telegram.js';
 import { TF_LABEL } from './config.js';
+import { statsText } from './reports.js';
 
 const REPORT = /#(\d{1,3})\s*(TP|SL|B\/?E)\b/gi;
 
@@ -46,6 +47,7 @@ export async function readInbox(state, { token, chatId, fetchFn = fetch, now }) 
       }
       const msg = u.message;
       if (!msg?.text || String(msg.chat.id) !== chatId) continue;
+      if (/^\/stats(@\w+)?\s*$/i.test(msg.text)) { replies.push({ id: `stats:${u.update_id}`, text: statsText(state, now) }); continue; }
       parseReports(replyReport(msg) ?? msg.text).forEach((r, i) => replies.push({ id: `report:${u.update_id}:${i}`, text: applyReport(state, r, now) }));
     }
   }

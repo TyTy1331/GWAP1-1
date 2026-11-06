@@ -123,7 +123,7 @@ The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA). For AUDJPY, 1 pip = 0.01.
 
 ## Reporting your own trades (#05TP / #05SL / #05BE)
 
-Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP`, `#05SL` or `#05BE` for break-even (`#5 tp` and `#5 b/e` work too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it. Easier: swipe-reply to any alert for that trade (formed, upgraded or tapped) with just `TP`, `SL` or `BE`.
+Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP`, `#05SL` or `#05BE` for break-even (`#5 tp` and `#5 b/e` work too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it. Easier: swipe-reply to any alert for that trade (formed, upgraded or tapped) with just `TP`, `SL` or `BE`. Send `/stats` any time for your TP/SL/BE and the bot's own 1:1 tracking over the last 7 and 30 days (answered on the next run). To show it in the Telegram command menu, send @BotFather `/setcommands`, pick the bot and send `stats - Win/loss stats`.
 
 The weekly recap then shows **Your trades** (what you reported; break-evens are listed but don't count toward the win rate) separately from **Bot tracking** (whether the exact 1:1 levels were hit). Your results can differ from the bot's when you pre-enter, move to break-even, or pull TP in. Only the chat the alerts go to can report trades.
 

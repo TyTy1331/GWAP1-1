@@ -92,3 +92,17 @@ test('reads past 100 messages in one run', async () => {
   assert.equal(replies.length, 1);
   assert.equal(s.tgOffset, 250);
 });
+
+test('/stats replies with your reports and the bot tracking for 7 and 30 days', async () => {
+  const now = 40 * 86400;
+  const s = freshState();
+  s.levels.push(lvl(1, { reported: 'TP', formedClose: now - 86400 }), lvl(2, { reported: 'SL', formedClose: now - 20 * 86400 }),
+    lvl(3, { reported: 'TP', pair: 'OANDA:AUDJPY', formedClose: now - 2 * 86400 }), lvl(4, { status: 'active', formedClose: now - 60 }));
+  s.results.push({ pair: 'OANDA:AUDUSD', tf: 900, outcome: 'won', closed: now - 3600 }, { pair: 'OANDA:AUDUSD', tf: 900, outcome: 'lost', closed: now - 10 * 86400 });
+  const [r] = await readInbox(s, { token: 't', chatId: '873516785', now, fetchFn: updates([msg(1, 873516785, '/stats@GWAPSIGNALS_BOT')]) });
+  const [week, month] = r.text.split('<b>Last 30 days</b>');
+  assert.ok(week.includes('You: 2 TP / 0 SL (100%)') && week.includes('AUDJPY: 1 TP') && week.includes('Bot (exact 1:1): 1W / 0L (100%)'), r.text);
+  assert.ok(month.includes('You: 2 TP / 1 SL (67%)') && month.includes('1W / 1L (50%)'), r.text);
+  assert.ok(r.text.includes('1 alert(s) waiting for a tap'), r.text);
+  assert.ok(!r.text.includes('DA plays'));
+});
