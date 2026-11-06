@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatEvent, sendMessage, deliver, enqueue, esc, TelegramError } from '../src/telegram.js';
+import { formatEvent, warnLines, sendMessage, deliver, enqueue, esc, TelegramError } from '../src/telegram.js';
 import { freshState } from '../src/state.js';
 import { utc } from './helpers/candles.js';
 
@@ -20,6 +20,12 @@ test('formation message names the trade and its confluences, not entry/stop/TP',
 test('no warnings means no warning lines', () => {
   const text = formatEvent({ kind: 'formed', level: { ...level, setup: { ...level.setup, warnings: [] } } });
   assert.ok(!text.includes('⚠️'));
+});
+
+test('many voids collapse into one average line', () => {
+  const lines = warnLines(['Unfilled void against the trade at 109.146–109.642', 'Large stop: 70.2 pips', 'Unfilled void against the trade at 110.912–111.196']);
+  assert.deepEqual(lines, ['⚠️ 2 unfilled voids against the trade, averaging 110.224 (109.146–111.196)', '⚠️ Large stop: 70.2 pips']);
+  assert.deepEqual(warnLines(['Unfilled void against the trade at 1.344–1.345']), ['⚠️ Unfilled void against the trade at 1.344–1.345']);
 });
 
 test('escape covers &, < and >', () => assert.equal(esc('a&b<c>'), 'a&amp;b&lt;c&gt;'));

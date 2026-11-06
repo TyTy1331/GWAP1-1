@@ -15,6 +15,22 @@ const head = (l) => `${tag(l.num) ? `${tag(l.num)} ` : ''}${esc(name(l.pair))}${
 const side = (dir) => (dir === 'bull' ? 'BUY' : 'SELL');
 const trend = (t) => (t.dir ? `${t.dir === 'bull' ? 'bullish' : 'bearish'} (${t.count} BOS)` : 'unclear');
 
+// Several voids would flood the alert, so they become one line: how many, their average level and full span.
+export function warnLines(warnings) {
+  const voids = [], rest = [];
+  for (const w of warnings) {
+    const m = /^Unfilled void against the trade at ([\d.]+)–([\d.]+)$/.exec(w);
+    if (m) voids.push([m[1], m[2]]); else rest.push(w);
+  }
+  if (voids.length > 1) {
+    const dp = Math.max(...voids.flat().map((x) => x.split('.')[1]?.length ?? 0));
+    const nums = voids.flat().map(Number);
+    const avg = (voids.reduce((a, [f, t]) => a + (+f + +t) / 2, 0) / voids.length).toFixed(dp);
+    rest.unshift(`${voids.length} unfilled voids against the trade, averaging ${avg} (${Math.min(...nums)}–${Math.max(...nums)})`);
+  } else if (voids.length) rest.unshift(`Unfilled void against the trade at ${voids[0][0]}–${voids[0][1]}`);
+  return rest.map((w) => `⚠️ ${esc(w)}`);
+}
+
 // Alerts name the trade and its confluences only; entry, stop and TP are the trader's call.
 export function formatEvent(e, ctx = {}) {
   const l = e.level;
@@ -29,7 +45,7 @@ export function formatEvent(e, ctx = {}) {
         `Session: ${esc(l.session)}`,
         `Tap window closes: ${fmtTime(l.deadline)}`,
       ];
-      for (const w of l.setup.warnings) lines.push(`⚠️ ${esc(w)}`);
+      lines.push(...warnLines(l.setup.warnings));
       for (const n of l.setup.notes ?? []) lines.push(`ℹ️ ${esc(n)}`);
       for (const n of ctx.upcoming ?? []) lines.push(`📅 ${esc(n.country)} ${esc(n.title)} at ${fmtTime(n.t)}`);
       if (ctx.newsUnavailable) lines.push('📅 News check unavailable — check the calendar yourself');
@@ -39,7 +55,7 @@ export function formatEvent(e, ctx = {}) {
     case 'upgrade':
       return [
         `🔼 <b>${head(l)} ${side(l.dir)} upgraded to ${TF_LABEL[l.tf]}</b>`,
-        ...l.setup.warnings.map((w) => `⚠️ ${esc(w)}`),
+        ...warnLines(l.setup.warnings),
         ...(l.setup.notes ?? []).map((n) => `ℹ️ ${esc(n)}`),
         `Tap window now closes: ${fmtTime(l.deadline)}`,
       ].join('\n');
