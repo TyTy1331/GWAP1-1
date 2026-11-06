@@ -96,7 +96,7 @@ test('DA play: counter-trend no-wick after holding a DA → 🧪 alert with the 
   assert.equal(l.setup.stop, 0.701);
   assert.equal(l.setup.tp, 0.7066);
   const text = formatEvent(events[0]);
-  assert.ok(text.startsWith('🧪 <b>DA PLAY (experimental)'), text);
+  assert.ok(text.includes('<b>#01 AUDUSD 🧪 15m') &&text.includes('DA PLAY (experimental)'), text);
   assert.ok(text.includes('0.7011–0.7013'), text);
   assert.ok(journalRow(l).includes(',da,'));
 });

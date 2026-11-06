@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseReports, applyReport, readInbox } from '../src/inbox.js';
+import { parseReports, applyReport, readInbox, replyReport } from '../src/inbox.js';
 import { recapText } from '../src/reports.js';
 import { formatEvent } from '../src/telegram.js';
 import { freshState } from '../src/state.js';
@@ -57,13 +57,27 @@ test('recap lists your reported trades by number, plus bot tracking', () => {
   assert.ok(text.includes('Bot tracking'));
 });
 
-test('alerts carry the trade number and the reply hint', () => {
-  const level = { ...lvl(5), level: 0.7, deadline: 2000, session: 'London', internal: { dir: 'bear', count: 1 }, external: { dir: 'bear', count: 1 },
+test('alerts carry the trade number, without a reply hint', () => {
+  const level = { ...lvl(5), level: 0.7, candleOpen: 1000, deadline: 2000, session: 'London', internal: { dir: 'bear', count: 1 }, external: { dir: 'bear', count: 1 },
     setup: { entry: 0.7, stop: 0.7011, altStop: null, tp: 0.6989, riskPips: 11, warnings: [] }, tapIndex: 2 };
   const formed = formatEvent({ kind: 'formed', level });
   assert.ok(formed.includes('#05 AUDUSD 15m SELL'));
-  assert.ok(formed.includes('reply <b>#05TP</b>, <b>#05SL</b> or <b>#05BE</b>'));
+  assert.ok(!formed.includes('reply'));
   assert.ok(formatEvent({ kind: 'tap', level, time: 1500 }).includes('#05 AUDUSD'));
+});
+
+test('a bare TP sent as a reply to an alert reports that alert number', async () => {
+  const alert = { text: '🔴 #05 AUDUSD 15m SELL\nBearish no-wick · Fri 09:00 candle' };
+  assert.equal(replyReport({ text: 'tp', reply_to_message: alert }), '#05tp');
+  assert.equal(replyReport({ text: 'B/E!', reply_to_message: alert }), '#05B/E');
+  assert.equal(replyReport({ text: 'tp', reply_to_message: { text: 'no number here' } }), null);
+  assert.equal(replyReport({ text: 'tp hit nicely', reply_to_message: alert }), null);
+  assert.equal(replyReport({ text: 'TP' }), null);
+  const s = freshState();
+  s.levels.push(lvl(5));
+  const reply = { update_id: 1, message: { chat: { id: 873516785 }, text: 'TP', reply_to_message: alert } };
+  const [r] = await readInbox(s, { token: 't', chatId: '873516785', now: 9, fetchFn: updates([reply]) });
+  assert.match(r.text, /#05 AUDUSD 15m SELL marked TP/);
 });
 
 test('reads past 100 messages in one run', async () => {

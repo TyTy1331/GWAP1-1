@@ -9,11 +9,19 @@ export function fmtTime(t) {
   return `${p.weekday} ${p.date.slice(5)} ${hh}:${mm} SAST`;
 }
 
+// Short form for alert bodies: "Fri 19:00".
+export function clock(t) {
+  const p = localParts(t, config.displayZone);
+  return `${p.weekday} ${String(Math.floor(p.minutes / 60)).padStart(2, '0')}:${String(p.minutes % 60).padStart(2, '0')}`;
+}
+
 const name = (pair) => pair.split(':').pop();
 export const tag = (num) => (num ? `#${String(num).padStart(2, '0')}` : '');
 const head = (l) => `${tag(l.num) ? `${tag(l.num)} ` : ''}${esc(name(l.pair))}${l.playType === 'da' ? ' 🧪' : ''}`;
 const side = (dir) => (dir === 'bull' ? 'BUY' : 'SELL');
+const dot = (dir) => (dir === 'bull' ? '🟢' : '🔴');
 const trend = (t) => (t.dir ? `${t.dir === 'bull' ? 'bullish' : 'bearish'} (${t.count} BOS)` : 'unclear');
+const title = (l) => `<b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b>`;
 
 // Several voids would flood the alert, so they become one line: how many, their average level and full span.
 export function warnLines(warnings) {
@@ -28,8 +36,14 @@ export function warnLines(warnings) {
     const avg = (voids.reduce((a, [f, t]) => a + (+f + +t) / 2, 0) / voids.length).toFixed(dp);
     rest.unshift(`${voids.length} unfilled voids against the trade, averaging ${avg} (${Math.min(...nums)}–${Math.max(...nums)})`);
   } else if (voids.length) rest.unshift(`Unfilled void against the trade at ${voids[0][0]}–${voids[0][1]}`);
-  return rest.map((w) => `⚠️ ${esc(w)}`);
+  return rest.map((w) => `• ${esc(w)}`);
 }
+
+// A titled block, or nothing when it has no lines. Blocks are separated by a blank line.
+const block = (heading, lines) => (lines.length ? [heading, ...lines].join('\n') : '');
+const blocks = (...b) => b.filter(Boolean).join('\n\n');
+const cautions = (l) => block('⚠️ <b>Watch out</b>', warnLines(l.setup.warnings));
+const notes = (l) => block('ℹ️ <b>Good to know</b>', (l.setup.notes ?? []).map((n) => `• ${esc(n)}`));
 
 // Alerts name the trade and its confluences only; entry, stop and TP are the trader's call.
 export function formatEvent(e, ctx = {}) {
@@ -37,36 +51,39 @@ export function formatEvent(e, ctx = {}) {
   switch (e.kind) {
     case 'formed': {
       const da = l.playType === 'da';
-      const lines = [
-        da ? `🧪 <b>DA PLAY (experimental) — ${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b>`
-          : `🟡 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b> — ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick`,
-        ...(da ? [`Counter-trend ${l.dir === 'bull' ? 'bullish' : 'bearish'} no-wick after price held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : []),
-        `15m trend: ${trend(l.internal)} · 4H: ${trend(l.external)}${l.external.dir === l.dir ? (l.internal.dir === l.dir ? ' (aligned)' : ' (aligned — 1 BOS against = pullback)') : da ? ' (against — DA play, 1 BOS)' : ' (against, 2 BOS rule met)'}`,
-        `Session: ${esc(l.session)}`,
-        `Tap window closes: ${fmtTime(l.deadline)}`,
+      const bias = l.external.dir === l.dir
+        ? (l.internal.dir === l.dir ? '✅ aligned' : '✅ aligned (pullback: 1 BOS against)')
+        : da ? '↩️ against (DA play, 1 BOS)' : '↩️ against (2 BOS rule met)';
+      const news = [
+        ...(ctx.upcoming ?? []).map((n) => `• ${esc(n.country)} ${esc(n.title)} at ${clock(n.t)}`),
+        ...(ctx.newsUnavailable ? ['• News check unavailable — check the calendar yourself'] : []),
       ];
-      lines.push(...warnLines(l.setup.warnings));
-      for (const n of l.setup.notes ?? []) lines.push(`ℹ️ ${esc(n)}`);
-      for (const n of ctx.upcoming ?? []) lines.push(`📅 ${esc(n.country)} ${esc(n.title)} at ${fmtTime(n.t)}`);
-      if (ctx.newsUnavailable) lines.push('📅 News check unavailable — check the calendar yourself');
-      if (l.num) lines.push(`When your trade closes, reply <b>${tag(l.num)}TP</b>, <b>${tag(l.num)}SL</b> or <b>${tag(l.num)}BE</b>`);
-      return lines.join('\n');
+      return blocks(
+        [`${dot(l.dir)} ${title(l)}${da ? ' · DA PLAY (experimental)' : ''}`,
+          `${l.dir === 'bull' ? 'Bullish' : 'Bearish'} no-wick · ${clock(l.candleOpen)} candle`,
+          ...(da ? [`Held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : [])].join('\n'),
+        block('📊 <b>Trend</b>', [`15m: ${trend(l.internal)}`, `4H: ${trend(l.external)} ${bias}`]),
+        `🕒 ${esc(l.session)} session · tap window closes ${clock(l.deadline)}`,
+        cautions(l),
+        notes(l),
+        block('📅 <b>News</b>', news),
+      );
     }
     case 'upgrade':
-      return [
-        `🔼 <b>${head(l)} ${side(l.dir)} upgraded to ${TF_LABEL[l.tf]}</b>`,
-        ...warnLines(l.setup.warnings),
-        ...(l.setup.notes ?? []).map((n) => `ℹ️ ${esc(n)}`),
-        `Tap window now closes: ${fmtTime(l.deadline)}`,
-      ].join('\n');
+      return blocks(
+        `🔼 ${title(l)} · upgraded\nThe ${TF_LABEL[l.tf]} candle is a no-wick too · ${clock(l.candleOpen)} candle`,
+        cautions(l),
+        notes(l),
+        `🕒 Tap window now closes ${clock(l.deadline)}`,
+      );
     case 'tap':
-      return `🎯 <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)} tapped</b> at ${fmtTime(e.time)} (${l.tapIndex}/${config.tapWindowCandles})`;
+      return `🎯 ${title(l)} · tapped\n${clock(e.time)} · candle ${l.tapIndex}/${config.tapWindowCandles}`;
     case 'result':
-      return `${e.outcome === 'won' ? '✅' : '❌'} <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}: ${e.outcome === 'won' ? 'TP hit, +1R' : 'stopped out, −1R'}</b> at ${fmtTime(e.time)}`;
+      return `${e.outcome === 'won' ? '✅' : '❌'} ${title(l)} · ${e.outcome === 'won' ? 'TP hit (+1R)' : 'stopped out (−1R)'}\n${clock(e.time)}`;
     case 'be': {
       const b = l.beSignal, toStop = b.mode === 'stop';
-      return `🛡️ <b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}: no-wick against you</b> at ${b.at} (${fmtTime(e.time)})\n`
-        + (toStop ? `Trade is in profit → move your stop to break-even (${l.level}).` : `Trade is in drawdown → move your TP to break-even (${l.level}).`);
+      return `🛡️ ${title(l)} · no-wick against you\nAt ${b.at} · ${clock(e.time)}\n\n`
+        + (toStop ? `In profit → move your stop to break-even (${l.level}).` : `In drawdown → move your TP to break-even (${l.level}).`);
     }
     case 'gap':
       return `⚠️ <b>${esc(name(e.pair))}: data gap</b> ${fmtTime(e.from)} → ${fmtTime(e.to)}. ${e.count} live level(s) marked unknown.`;

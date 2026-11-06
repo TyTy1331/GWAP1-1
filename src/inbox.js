@@ -8,6 +8,13 @@ export function parseReports(text) {
   return [...String(text).matchAll(REPORT)].map((m) => ({ num: Number(m[1]), outcome: m[2].toUpperCase().replace('/', '') }));
 }
 
+// A bare "TP" / "sl" / "b/e" sent as a Telegram reply to an alert counts for the trade number in that alert.
+export function replyReport(msg) {
+  const m = /^\s*(TP|SL|B\/?E)\s*[.!✅❌]*\s*$/i.exec(msg.text ?? '');
+  const num = /#(\d{1,3})\b/.exec(msg.reply_to_message?.text ?? '');
+  return m && num ? `#${num[1]}${m[1]}` : null;
+}
+
 const label = (l) => `${tag(l.num)} ${l.pair.split(':').pop()} ${TF_LABEL[l.tf]} ${l.dir === 'bull' ? 'BUY' : 'SELL'}`;
 
 // Records a reported outcome on the newest trade with that number. Returns the reply text.
@@ -39,7 +46,7 @@ export async function readInbox(state, { token, chatId, fetchFn = fetch, now }) 
       }
       const msg = u.message;
       if (!msg?.text || String(msg.chat.id) !== chatId) continue;
-      parseReports(msg.text).forEach((r, i) => replies.push({ id: `report:${u.update_id}:${i}`, text: applyReport(state, r, now) }));
+      parseReports(replyReport(msg) ?? msg.text).forEach((r, i) => replies.push({ id: `report:${u.update_id}:${i}`, text: applyReport(state, r, now) }));
     }
   }
   return replies;

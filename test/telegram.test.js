@@ -5,14 +5,14 @@ import { freshState } from '../src/state.js';
 import { utc } from './helpers/candles.js';
 
 const level = {
-  id: 'OANDA:GBPUSD:1:bull', pair: 'OANDA:GBPUSD', tf: 900, dir: 'bull', level: 1.3457, deadline: utc('2026-11-04T12:30:00Z'),
+  candleOpen: utc('2026-11-04T08:00:00Z'), id: 'OANDA:GBPUSD:1:bull', pair: 'OANDA:GBPUSD', tf: 900, dir: 'bull', level: 1.3457, deadline: utc('2026-11-04T12:30:00Z'),
   setup: { entry: 1.3457, stop: 1.3446, altStop: 1.345, tp: 1.3468, riskPips: 11, warnings: ['Unfilled void against the trade at 1.344–1.345'] },
   internal: { dir: 'bull', count: 2 }, external: { dir: 'bull', count: 1 }, session: 'London',
 };
 
 test('formation message names the trade and its confluences, not entry/stop/TP', () => {
   const text = formatEvent({ kind: 'formed', level }, { upcoming: [{ country: 'GBP', title: 'GDP <prelim>', t: utc('2026-11-04T11:00:00Z') }], newsUnavailable: true });
-  for (const s of ['GBPUSD 15m BUY', '15m trend: bullish (2 BOS)', '4H: bullish (1 BOS) (aligned)', 'Session: London', '14:30 SAST', '⚠️ Unfilled void',
+  for (const s of ['🟢 <b>GBPUSD 15m BUY</b>', 'Wed 10:00 candle', '15m: bullish (2 BOS)', '4H: bullish (1 BOS) ✅ aligned', 'London session', 'closes Wed 14:30', '⚠️ <b>Watch out</b>\n• Unfilled void',
     'GDP &lt;prelim&gt;', 'News check unavailable']) assert.ok(text.includes(s), `missing: ${s}\n${text}`);
   for (const s of ['Entry', 'Stop', 'TP:', '1.3446', '1.3468']) assert.ok(!text.includes(s), `should not show: ${s}`);
 });
@@ -24,8 +24,8 @@ test('no warnings means no warning lines', () => {
 
 test('many voids collapse into one average line', () => {
   const lines = warnLines(['Unfilled void against the trade at 109.146–109.642', 'Large stop: 70.2 pips', 'Unfilled void against the trade at 110.912–111.196']);
-  assert.deepEqual(lines, ['⚠️ 2 unfilled voids against the trade, averaging 110.224 (109.146–111.196)', '⚠️ Large stop: 70.2 pips']);
-  assert.deepEqual(warnLines(['Unfilled void against the trade at 1.344–1.345']), ['⚠️ Unfilled void against the trade at 1.344–1.345']);
+  assert.deepEqual(lines, ['• 2 unfilled voids against the trade, averaging 110.224 (109.146–111.196)', '• Large stop: 70.2 pips']);
+  assert.deepEqual(warnLines(['Unfilled void against the trade at 1.344–1.345']), ['• Unfilled void against the trade at 1.344–1.345']);
 });
 
 test('escape covers &, < and >', () => assert.equal(esc('a&b<c>'), 'a&amp;b&lt;c&gt;'));
