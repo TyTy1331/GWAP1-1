@@ -1,0 +1,3096 @@
+{
+ "version": 1,
+ "pairs": {
+  "OANDA:AUDUSD": {
+   "last1m": 1794002400,
+   "last15": 1794002400
+  },
+  "OANDA:GBPUSD": {
+   "last1m": 1794002400,
+   "last15": 1794002400
+  },
+  "OANDA:AUDJPY": {
+   "last1m": 1794002400,
+   "last15": 1794002400
+  },
+  "FX:NAS100": {
+   "last1m": 1793894400,
+   "last15": 1793894400
+  }
+ },
+ "levels": [
+  {
+   "id": "OANDA:AUDUSD:1793820600:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 1800,
+   "dir": "bear",
+   "candleOpen": 1793820600,
+   "level": 0.70091,
+   "formedClose": 1793821500,
+   "windowStart": 1793822400,
+   "deadline": 1793838600,
+   "setup": {
+    "entry": 0.70091,
+    "stop": 0.70198,
+    "altStop": 0.70115,
+    "tp": 0.69984,
+    "riskPips": 10.7,
+    "warnings": [
+     "TP is beyond a swing low at 0.70076 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "New York",
+   "status": "lost",
+   "upgrades": [
+    1800
+   ],
+   "num": 1,
+   "tapTime": 1793822400,
+   "tapIndex": 1,
+   "muted": false,
+   "beSignal": {
+    "time": 1793825100,
+    "at": 0.70082,
+    "mode": "stop"
+   },
+   "managed": {
+    "stop": 0.70091,
+    "tp": 0.69984
+   },
+   "managedResult": "BE",
+   "reported": "TP",
+   "reportedAt": 1793840957,
+   "journaled": "lost|TP|1|BE",
+   "resultTime": 1793843460
+  },
+  {
+   "id": "OANDA:GBPUSD:1793820600:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793820600,
+   "level": 1.34672,
+   "formedClose": 1793821500,
+   "windowStart": 1793821500,
+   "deadline": 1793829600,
+   "setup": {
+    "entry": 1.34672,
+    "stop": 1.34784,
+    "altStop": 1.34689,
+    "tp": 1.3456,
+    "riskPips": 11.2,
+    "warnings": [
+     "TP is beyond a swing low at 1.34572 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bull",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "lost",
+   "upgrades": [],
+   "num": 2,
+   "tapTime": 1793822280,
+   "tapIndex": 1,
+   "muted": false,
+   "beSignal": {
+    "time": 1793830500,
+    "at": 1.34691,
+    "mode": "tp"
+   },
+   "managed": {
+    "stop": 1.34784,
+    "tp": 1.34672
+   },
+   "managedResult": "SL",
+   "resultTime": 1793836260,
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793824200:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793824200,
+   "level": 0.70082,
+   "formedClose": 1793825100,
+   "windowStart": 1793825100,
+   "deadline": 1793833200,
+   "setup": {
+    "entry": 0.70082,
+    "stop": 0.7004,
+    "altStop": 0.70076,
+    "tp": 0.70124,
+    "riskPips": 4.2,
+    "warnings": [
+     "TP is beyond a swing high at 0.70116 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "none",
+   "status": "lost",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "tapTime": 1793825100,
+   "tapIndex": 1,
+   "muted": false,
+   "beSignal": {
+    "time": 1793826000,
+    "at": 0.70088,
+    "mode": "stop"
+   },
+   "managed": {
+    "stop": 0.70082,
+    "tp": 0.70124
+   },
+   "managedResult": "BE",
+   "resultTime": 1793830920,
+   "journaled": "lost||0|BE"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793825100:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793825100,
+   "level": 0.70088,
+   "formedClose": 1793826000,
+   "windowStart": 1793826000,
+   "deadline": 1793834100,
+   "setup": {
+    "entry": 0.70088,
+    "stop": 0.7011,
+    "altStop": 0.70104,
+    "tp": 0.70066,
+    "riskPips": 2.2,
+    "warnings": [
+     "TP is beyond a swing low at 0.70076 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "none",
+   "status": "expired",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "journaled": "expired||0|"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793826000:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793826000,
+   "level": 0.70086,
+   "formedClose": 1793826900,
+   "windowStart": 1793829600,
+   "deadline": 1793862000,
+   "setup": {
+    "entry": 0.70086,
+    "stop": 0.70218,
+    "altStop": 0.70115,
+    "tp": 0.69954,
+    "riskPips": 13.2,
+    "warnings": [
+     "TP is beyond a swing low at 0.7006 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 3
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "none",
+   "status": "lost",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "shadow": true,
+   "skipReason": "outside session",
+   "tapTime": 1793837460,
+   "tapIndex": 3,
+   "muted": false,
+   "beSignal": {
+    "time": 1793838600,
+    "at": 0.70084,
+    "mode": "tp"
+   },
+   "managed": {
+    "stop": 0.70218,
+    "tp": 0.70086
+   },
+   "managedResult": "SL",
+   "resultTime": 1793846760,
+   "journaled": "lost||2|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793829600:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793829600,
+   "level": 0.70054,
+   "formedClose": 1793830500,
+   "windowStart": 1793830500,
+   "deadline": 1793838600,
+   "setup": {
+    "entry": 0.70054,
+    "stop": 0.7004,
+    "altStop": null,
+    "tp": 0.70068,
+    "riskPips": 1.4,
+    "warnings": []
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 3
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "none",
+   "status": "lost",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "tapTime": 1793830500,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793830920,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793830500:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793830500,
+   "level": 0.70056,
+   "formedClose": 1793831400,
+   "windowStart": 1793831400,
+   "deadline": 1793839500,
+   "setup": {
+    "entry": 0.70056,
+    "stop": 0.70098,
+    "altStop": 0.70066,
+    "tp": 0.70014,
+    "riskPips": 4.2,
+    "warnings": [
+     "Unfilled void against the trade at 0.7006–0.70088",
+     "TP is beyond a swing low at 0.70039 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 3
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "none",
+   "status": "lost",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "tapTime": 1793836200,
+   "tapIndex": 6,
+   "muted": false,
+   "resultTime": 1793837940,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793834100:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793834100,
+   "level": 0.7004,
+   "formedClose": 1793835000,
+   "windowStart": 1793835000,
+   "deadline": 1793843100,
+   "setup": {
+    "entry": 0.7004,
+    "stop": 0.7001,
+    "altStop": 0.70022,
+    "tp": 0.7007,
+    "riskPips": 3,
+    "warnings": [
+     "Conflicting bearish no-wick at 0.70056"
+    ]
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 3
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "none",
+   "status": "won",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "tapTime": 1793835000,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793837220,
+   "managedResult": "TP",
+   "journaled": "won||0|TP"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793837700:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793837700,
+   "level": 0.70084,
+   "formedClose": 1793838600,
+   "windowStart": 1793838600,
+   "deadline": 1793846700,
+   "setup": {
+    "entry": 0.70084,
+    "stop": 0.7001,
+    "altStop": 0.7003,
+    "tp": 0.70158,
+    "riskPips": 7.4,
+    "warnings": [
+     "TP is beyond a swing high at 0.70124 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "none",
+   "status": "expired",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "journaled": "expired||0|"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793839500:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793839500,
+   "level": 0.7013,
+   "formedClose": 1793840400,
+   "windowStart": 1793840400,
+   "deadline": 1793848500,
+   "setup": {
+    "entry": 0.7013,
+    "stop": 0.7001,
+    "altStop": 0.70099,
+    "tp": 0.7025,
+    "riskPips": 12,
+    "warnings": [
+     "TP is beyond a swing high at 0.70242 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "none",
+   "status": "lost",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "tapTime": 1793841120,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793881980,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:GBPUSD:1793829600:bull",
+   "pair": "OANDA:GBPUSD",
+   "tf": 3600,
+   "dir": "bull",
+   "candleOpen": 1793829600,
+   "level": 1.34691,
+   "formedClose": 1793830500,
+   "windowStart": 1793833200,
+   "deadline": 1793865600,
+   "setup": {
+    "entry": 1.34691,
+    "stop": 1.34537,
+    "altStop": null,
+    "tp": 1.34845,
+    "riskPips": 15.4,
+    "warnings": [
+     "TP is beyond a swing high at 1.34792 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bull",
+    "count": 3
+   },
+   "session": "none",
+   "status": "expired",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "shadow": true,
+   "skipReason": "outside session",
+   "journaled": "expired||2|"
+  },
+  {
+   "id": "OANDA:GBPUSD:1793837700:bull",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793837700,
+   "level": 1.34784,
+   "formedClose": 1793838600,
+   "windowStart": 1793838600,
+   "deadline": 1793846700,
+   "setup": {
+    "entry": 1.34784,
+    "stop": 1.34681,
+    "altStop": 1.3476,
+    "tp": 1.34887,
+    "riskPips": 10.3,
+    "warnings": [
+     "Unfilled void against the trade at 1.34561–1.34748",
+     "Unfilled void against the trade at 1.34691–1.34784"
+    ]
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bull",
+    "count": 3
+   },
+   "session": "none",
+   "status": "expired",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "journaled": "expired||0|"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793844900:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793844900,
+   "level": 0.70156,
+   "formedClose": 1793845800,
+   "windowStart": 1793845800,
+   "deadline": 1793853900,
+   "setup": {
+    "entry": 0.70156,
+    "stop": 0.70106,
+    "altStop": 0.70143,
+    "tp": 0.70206,
+    "riskPips": 5,
+    "warnings": [
+     "TP is beyond a swing high at 0.70188 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 2
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "none",
+   "status": "won",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "tapTime": 1793847360,
+   "tapIndex": 2,
+   "muted": false,
+   "resultTime": 1793848500,
+   "managedResult": "TP",
+   "journaled": "won||0|TP"
+  },
+  {
+   "id": "OANDA:GBPUSD:1793848500:bull",
+   "num": 10,
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793848500,
+   "level": 1.34904,
+   "formedClose": 1793849400,
+   "windowStart": 1793849400,
+   "deadline": 1793857500,
+   "setup": {
+    "entry": 1.34904,
+    "stop": 1.34835,
+    "altStop": 1.34859,
+    "tp": 1.34973,
+    "riskPips": 6.9,
+    "warnings": [
+     "Unfilled void against the trade at 1.34691–1.34887",
+     "TP is beyond a swing high at 1.34922 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bull",
+    "count": 3
+   },
+   "session": "Late Asia",
+   "status": "won",
+   "upgrades": [],
+   "tapTime": 1793849880,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793851860,
+   "managedResult": "TP",
+   "journaled": "won||0|TP"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793859300:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793859300,
+   "level": 0.70123,
+   "formedClose": 1793860200,
+   "windowStart": 1793860200,
+   "deadline": 1793868300,
+   "setup": {
+    "entry": 0.70123,
+    "stop": 0.70062,
+    "altStop": 0.70078,
+    "tp": 0.70184,
+    "riskPips": 6.1,
+    "warnings": [
+     "TP is beyond a swing high at 0.70124 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "Late Asia",
+   "status": "won",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "trend (15m bull×1, 4H bear)",
+   "tapTime": 1793863740,
+   "tapIndex": 4,
+   "muted": false,
+   "resultTime": 1793866080,
+   "managedResult": "TP",
+   "journaled": "won||0|TP"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793861100:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793861100,
+   "level": 0.70184,
+   "formedClose": 1793862000,
+   "windowStart": 1793862000,
+   "deadline": 1793870100,
+   "setup": {
+    "entry": 0.70184,
+    "stop": 0.70062,
+    "altStop": 0.7016,
+    "tp": 0.70306,
+    "riskPips": 12.2,
+    "warnings": [
+     "TP is beyond a swing high at 0.70242 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "Late Asia",
+   "status": "lost",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "trend (15m bull×1, 4H bear)",
+   "tapTime": 1793863320,
+   "tapIndex": 2,
+   "muted": false,
+   "resultTime": 1793881440,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:GBPUSD:1793861100:bull",
+   "num": 12,
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793861100,
+   "level": 1.34907,
+   "formedClose": 1793862000,
+   "windowStart": 1793862000,
+   "deadline": 1793870100,
+   "setup": {
+    "entry": 1.34907,
+    "stop": 1.34876,
+    "altStop": 1.34898,
+    "tp": 1.34938,
+    "riskPips": 3.1,
+    "warnings": [
+     "Unfilled void against the trade at 1.34691–1.34887",
+     "TP is beyond a swing high at 1.34922 — consider pulling TP in"
+    ]
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bull",
+    "count": 3
+   },
+   "session": "Late Asia",
+   "status": "lost",
+   "upgrades": [],
+   "tapTime": 1793862840,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793863080,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793871900:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793871900,
+   "level": 0.70104,
+   "formedClose": 1793872800,
+   "windowStart": 1793872800,
+   "deadline": 1793880900,
+   "setup": {
+    "entry": 0.70104,
+    "stop": 0.70065,
+    "altStop": 0.70075,
+    "tp": 0.70143,
+    "riskPips": 3.9,
+    "warnings": [
+     "TP is beyond a swing high at 0.70124 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "0.6989–0.6991",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 2
+   },
+   "session": "London",
+   "status": "won",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "trend (15m bear×1, 4H bear)",
+   "tapTime": 1793874000,
+   "tapIndex": 2,
+   "muted": false,
+   "resultTime": 1793876460,
+   "managedResult": "TP",
+   "journaled": "won||0|TP"
+  },
+  {
+   "id": "OANDA:GBPUSD:1793871900:bear",
+   "num": 14,
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793871900,
+   "level": 1.34667,
+   "formedClose": 1793872800,
+   "windowStart": 1793872800,
+   "deadline": 1793880900,
+   "setup": {
+    "entry": 1.34667,
+    "stop": 1.34839,
+    "altStop": 1.34744,
+    "tp": 1.34495,
+    "riskPips": 17.2,
+    "warnings": [
+     "Unfilled void against the trade at 1.34714–1.34974",
+     "Unfilled void against the trade at 1.34671–1.34812",
+     "TP is beyond a swing low at 1.34518 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "1.3445–1.3447",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bull",
+    "count": 3
+   },
+   "session": "London",
+   "status": "won",
+   "upgrades": [],
+   "tapTime": 1793873280,
+   "tapIndex": 1,
+   "muted": false,
+   "reported": "TP",
+   "reportedAt": 1793879116,
+   "journaled": "won|TP|0|TP",
+   "resultTime": 1793879400,
+   "managedResult": "TP"
+  },
+  {
+   "id": "OANDA:GBPUSD:1793880000:bull",
+   "pair": "OANDA:GBPUSD",
+   "tf": 3600,
+   "dir": "bull",
+   "candleOpen": 1793880000,
+   "level": 1.3452,
+   "formedClose": 1793880900,
+   "windowStart": 1793883600,
+   "deadline": 1793916000,
+   "setup": {
+    "entry": 1.3452,
+    "stop": 1.34508,
+    "altStop": 1.34482,
+    "tp": 1.34532,
+    "riskPips": 1.2,
+    "warnings": [],
+    "notes": [],
+    "da": {
+     "below": "1.3445–1.3447",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bull",
+    "count": 3
+   },
+   "session": "London",
+   "status": "lost",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "shadow": true,
+   "skipReason": "red-folder news",
+   "tapTime": 1793907060,
+   "tapIndex": 7,
+   "muted": false,
+   "resultTime": 1793907240,
+   "managedResult": "SL",
+   "journaled": "lost||2|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793898000:bear",
+   "num": 15,
+   "pair": "OANDA:AUDUSD",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793898000,
+   "level": 0.69596,
+   "formedClose": 1793898900,
+   "windowStart": 1793901600,
+   "deadline": 1793934000,
+   "setup": {
+    "entry": 0.69596,
+    "stop": 0.70256,
+    "altStop": 0.69814,
+    "tp": 0.68936,
+    "riskPips": 66,
+    "warnings": [
+     "TP is beyond a swing low at 0.69547 — consider pulling TP in",
+     "Large stop: 66 pips"
+    ],
+    "notes": [
+     "A DA between entry and stop protects it (0.6989–0.6991)"
+    ],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 3
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "expired",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "journaled": "expired||2|"
+  },
+  {
+   "id": "OANDA:AUDJPY:1793898000:bear",
+   "num": 16,
+   "pair": "OANDA:AUDJPY",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793898000,
+   "level": 109.802,
+   "formedClose": 1793898900,
+   "windowStart": 1793901600,
+   "deadline": 1793934000,
+   "setup": {
+    "entry": 109.802,
+    "stop": 111.142,
+    "altStop": 109.99,
+    "tp": 108.462,
+    "riskPips": 134,
+    "warnings": [
+     "Unfilled void against the trade at 110.912–111.196",
+     "Unfilled void against the trade at 109.804–111.094",
+     "TP is beyond a swing low at 109.712 — consider pulling TP in",
+     "Large stop: 134 pips",
+     "Unfilled void against the trade at 109.804–110.966",
+     "Unfilled void against the trade at 109.837–111.006"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 3
+   },
+   "external": {
+    "dir": "bull",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "expired",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "journaled": "expired||2|"
+  },
+  {
+   "id": "OANDA:AUDJPY:1793903400:bear",
+   "num": 17,
+   "pair": "OANDA:AUDJPY",
+   "tf": 1800,
+   "dir": "bear",
+   "candleOpen": 1793903400,
+   "level": 109.614,
+   "formedClose": 1793904300,
+   "windowStart": 1793905200,
+   "deadline": 1793921400,
+   "setup": {
+    "entry": 109.614,
+    "stop": 110.996,
+    "altStop": 109.733,
+    "tp": 108.232,
+    "riskPips": 138.2,
+    "warnings": [
+     "Untapped bearish no-wick at 109.802 sat inside the normal stop — stop moved beyond the swing high at 110.986",
+     "TP is beyond a swing low at 109.558 — consider pulling TP in",
+     "Large stop: 138.2 pips",
+     "Unfilled void against the trade at 109.837–111.006"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 3
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "tracking",
+   "upgrades": [
+    1800
+   ],
+   "tapTime": 1793906040,
+   "tapIndex": 1,
+   "muted": false,
+   "beSignal": {
+    "time": 1793955600,
+    "at": 108.622,
+    "mode": "stop"
+   },
+   "managed": {
+    "stop": 109.614,
+    "tp": 108.232
+   }
+  },
+  {
+   "id": "OANDA:GBPUSD:1793907000:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793907000,
+   "level": 1.34538,
+   "formedClose": 1793907900,
+   "windowStart": 1793907900,
+   "deadline": 1793916000,
+   "setup": {
+    "entry": 1.34538,
+    "stop": 1.34873,
+    "altStop": 1.34636,
+    "tp": 1.34203,
+    "riskPips": 33.5,
+    "warnings": [
+     "TP is beyond a swing low at 1.34236 — consider pulling TP in",
+     "Large stop: 33.5 pips",
+     "TP is beyond a DA at 1.3447 — consider TP just before it"
+    ],
+    "notes": [],
+    "da": {
+     "below": "1.3445–1.3447",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": 1.3447
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bull",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "won",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "trend (15m bear×1, 4H bull)",
+   "tapTime": 1793907900,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793947500,
+   "managedResult": "TP",
+   "journaled": "won||0|TP"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793908800:bear",
+   "num": 18,
+   "pair": "OANDA:AUDUSD",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793908800,
+   "level": 0.69458,
+   "formedClose": 1793909700,
+   "windowStart": 1793912400,
+   "deadline": 1793944800,
+   "setup": {
+    "entry": 0.69458,
+    "stop": 0.70256,
+    "altStop": 0.6954,
+    "tp": 0.6866,
+    "riskPips": 79.8,
+    "warnings": [
+     "Untapped bearish no-wick at 0.69596 sat inside the normal stop — stop moved beyond the swing high at 0.70246",
+     "Unfilled void against the trade at 0.69594–0.70145",
+     "TP is beyond a swing low at 0.69453 — consider pulling TP in",
+     "Large stop: 79.8 pips",
+     "Unfilled void against the trade at 0.69538–0.70045"
+    ],
+    "notes": [
+     "A DA between entry and stop protects it (0.6989–0.6991)"
+    ],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 4
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "expired",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "journaled": "expired||2|"
+  },
+  {
+   "id": "OANDA:GBPUSD:1793908800:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793908800,
+   "level": 1.34588,
+   "formedClose": 1793909700,
+   "windowStart": 1793912400,
+   "deadline": 1793944800,
+   "setup": {
+    "entry": 1.34588,
+    "stop": 1.34873,
+    "altStop": 1.34636,
+    "tp": 1.34303,
+    "riskPips": 28.5,
+    "warnings": [
+     "TP is beyond a swing low at 1.34518 — consider pulling TP in",
+     "Large stop: 28.5 pips",
+     "TP is beyond a DA at 1.3447 — consider TP just before it"
+    ],
+    "notes": [],
+    "da": {
+     "below": "1.3445–1.3447",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": 1.3447
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bull",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "won",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "shadow": true,
+   "skipReason": "trend (15m bear×1, 4H bull)",
+   "tapTime": 1793916240,
+   "tapIndex": 2,
+   "muted": false,
+   "resultTime": 1793936640,
+   "managedResult": "TP",
+   "journaled": "won||2|TP"
+  },
+  {
+   "id": "OANDA:AUDJPY:1793908800:bear",
+   "num": 19,
+   "pair": "OANDA:AUDJPY",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793908800,
+   "level": 109.642,
+   "formedClose": 1793909700,
+   "windowStart": 1793912400,
+   "deadline": 1793944800,
+   "setup": {
+    "entry": 109.642,
+    "stop": 111.142,
+    "altStop": 109.689,
+    "tp": 108.142,
+    "riskPips": 150,
+    "warnings": [
+     "Untapped bearish no-wick at 109.802 sat inside the normal stop — stop moved beyond the swing high at 111.132",
+     "Unfilled void against the trade at 110.912–111.196",
+     "TP is beyond a swing low at 109.63 — consider pulling TP in",
+     "Large stop: 150 pips",
+     "Unfilled void against the trade at 109.837–111.006"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 3
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "expired",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "reported": "TP",
+   "reportedAt": 1793911822,
+   "journaled": "expired|TP|2|"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793912400:bear",
+   "num": 20,
+   "pair": "OANDA:AUDUSD",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793912400,
+   "level": 0.69328,
+   "formedClose": 1793913300,
+   "windowStart": 1793916000,
+   "deadline": 1793948400,
+   "setup": {
+    "entry": 0.69328,
+    "stop": 0.70256,
+    "altStop": 0.69458,
+    "tp": 0.684,
+    "riskPips": 92.8,
+    "warnings": [
+     "Untapped bearish no-wick at 0.69458, 0.69596 sat inside the normal stop — stop moved beyond the swing high at 0.70246",
+     "Unfilled void against the trade at 0.69594–0.70145",
+     "Unfilled void against the trade at 0.69329–0.69596",
+     "TP is beyond a swing low at 0.69028 — consider pulling TP in",
+     "Large stop: 92.8 pips",
+     "Unfilled void against the trade at 0.69383–0.696",
+     "Unfilled void against the trade at 0.69538–0.70045",
+     "Unfilled void against the trade at 0.69383–0.69528",
+     "Unfilled void against the trade at 0.69329–0.69458"
+    ],
+    "notes": [
+     "A DA between entry and stop protects it (0.6989–0.6991)"
+    ],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 4
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "tracking",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "tapTime": 1793916240,
+   "tapIndex": 1,
+   "muted": false,
+   "beSignal": {
+    "time": 1793930400,
+    "at": 0.69284,
+    "mode": "stop"
+   },
+   "managed": {
+    "stop": 0.69328,
+    "tp": 0.684
+   }
+  },
+  {
+   "id": "OANDA:AUDJPY:1793913300:bear",
+   "num": 21,
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793913300,
+   "level": 109.352,
+   "formedClose": 1793914200,
+   "windowStart": 1793914200,
+   "deadline": 1793922300,
+   "setup": {
+    "entry": 109.352,
+    "stop": 110,
+    "altStop": 109.422,
+    "tp": 108.704,
+    "riskPips": 64.8,
+    "warnings": [
+     "Untapped bearish no-wick at 109.642 sat inside the normal stop — stop moved beyond the swing high at 109.99",
+     "Untapped bearish no-wick above at 109.802 — price may pull back to it",
+     "Unfilled void against the trade at 109.837–111.006",
+     "Unfilled void against the trade at 109.55–109.921",
+     "Unfilled void against the trade at 109.352–109.642",
+     "Large stop: 64.8 pips"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 4
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "won",
+   "upgrades": [],
+   "tapTime": 1793916240,
+   "tapIndex": 3,
+   "muted": false,
+   "resultTime": 1793943060,
+   "managedResult": "TP",
+   "journaled": "won||0|TP"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793929500:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793929500,
+   "level": 0.69284,
+   "formedClose": 1793930400,
+   "windowStart": 1793930400,
+   "deadline": 1793938500,
+   "setup": {
+    "entry": 0.69284,
+    "stop": 0.6922,
+    "altStop": 0.69265,
+    "tp": 0.69348,
+    "riskPips": 6.4,
+    "warnings": [],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "none",
+   "status": "lost",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "outside session",
+   "tapTime": 1793930520,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793932860,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793934000:bear",
+   "num": 22,
+   "pair": "OANDA:AUDUSD",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793934000,
+   "level": 0.69164,
+   "formedClose": 1793934900,
+   "windowStart": 1793937600,
+   "deadline": 1793970000,
+   "setup": {
+    "entry": 0.69164,
+    "stop": 0.6937,
+    "altStop": 0.69304,
+    "tp": 0.68958,
+    "riskPips": 20.6,
+    "warnings": [
+     "Untapped bearish no-wick above at 0.69458 — price may pull back to it",
+     "Untapped bearish no-wick above at 0.69596 — price may pull back to it",
+     "Unfilled void against the trade at 0.69594–0.70145",
+     "Unfilled void against the trade at 0.69304–0.69596",
+     "TP is beyond a swing low at 0.69028 — consider pulling TP in",
+     "Large stop: 20.6 pips",
+     "Unfilled void against the trade at 0.69383–0.696",
+     "Unfilled void against the trade at 0.69304–0.69458",
+     "Unfilled void against the trade at 0.69165–0.69384",
+     "Unfilled void against the trade at 0.69451–0.69596",
+     "Unfilled void against the trade at 0.69311–0.69458",
+     "Unfilled void against the trade at 0.69272–0.69417",
+     "Unfilled void against the trade at 0.69165–0.69298"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "Asia",
+   "status": "expired",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "journaled": "expired||2|"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793939400:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793939400,
+   "level": 0.68952,
+   "formedClose": 1793940300,
+   "windowStart": 1793940300,
+   "deadline": 1793948400,
+   "setup": null,
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "Asia",
+   "status": "nosetup",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "trend (15m bear×2, 4H bear)",
+   "journaled": "nosetup||0|"
+  },
+  {
+   "id": "OANDA:AUDJPY:1793948400:bear",
+   "num": 23,
+   "pair": "OANDA:AUDJPY",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793948400,
+   "level": 108.788,
+   "formedClose": 1793949300,
+   "windowStart": 1793952000,
+   "deadline": 1793984400,
+   "setup": {
+    "entry": 108.788,
+    "stop": 109.49,
+    "altStop": 108.952,
+    "tp": 108.086,
+    "riskPips": 70.2,
+    "warnings": [
+     "Untapped bearish no-wick above at 109.642 — price may pull back to it",
+     "Untapped bearish no-wick above at 109.802 — price may pull back to it",
+     "Unfilled void against the trade at 110.912–111.196",
+     "Unfilled void against the trade at 109.55–111.094",
+     "Unfilled void against the trade at 109.146–109.642",
+     "TP is beyond a swing low at 108.786 — consider pulling TP in",
+     "Large stop: 70.2 pips",
+     "Unfilled void against the trade at 109.454–110.966",
+     "Unfilled void against the trade at 109.016–109.642",
+     "Unfilled void against the trade at 108.838–109.446"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "Asia",
+   "status": "tracking",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "tapTime": 1793955360,
+   "tapIndex": 1,
+   "muted": false,
+   "beSignal": {
+    "time": 1793968200,
+    "at": 108.852,
+    "mode": "tp"
+   },
+   "managed": {
+    "stop": 109.49,
+    "tp": 108.788
+   },
+   "managedResult": "BE",
+   "reported": "TP",
+   "reportedAt": 1793987113,
+   "journaled": "tracking|TP|2|BE"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793952000:bear",
+   "num": 24,
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793952000,
+   "level": 0.68772,
+   "formedClose": 1793952900,
+   "windowStart": 1793952900,
+   "deadline": 1793961000,
+   "setup": {
+    "entry": 0.68772,
+    "stop": 0.68899,
+    "altStop": 0.68803,
+    "tp": 0.68645,
+    "riskPips": 12.7,
+    "warnings": [
+     "Untapped bearish no-wick above at 0.69164 — price may pull back to it",
+     "Unfilled void against the trade at 0.69272–0.69417",
+     "Unfilled void against the trade at 0.68934–0.69298",
+     "TP is beyond a swing low at 0.68742 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 4
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "London",
+   "status": "won",
+   "upgrades": [],
+   "tapTime": 1793952900,
+   "tapIndex": 1,
+   "muted": false,
+   "reported": "TP",
+   "reportedAt": 1793961612,
+   "journaled": "won|TP|0|BE",
+   "beSignal": {
+    "time": 1793963700,
+    "at": 0.68692,
+    "mode": "stop"
+   },
+   "managed": {
+    "stop": 0.68772,
+    "tp": 0.68645
+   },
+   "managedResult": "BE",
+   "resultTime": 1793971800
+  },
+  {
+   "id": "OANDA:AUDJPY:1793954700:bull",
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793954700,
+   "level": 108.622,
+   "formedClose": 1793955600,
+   "windowStart": 1793955600,
+   "deadline": 1793963700,
+   "setup": {
+    "entry": 108.622,
+    "stop": 108.228,
+    "altStop": 108.438,
+    "tp": 109.016,
+    "riskPips": 39.4,
+    "warnings": [
+     "TP is beyond a swing high at 109.002 — consider pulling TP in",
+     "Large stop: 39.4 pips"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "London",
+   "status": "expired",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "trend (15m bull×1, 4H bear)",
+   "journaled": "expired||0|"
+  },
+  {
+   "id": "OANDA:AUDJPY:1793956500:bear",
+   "num": 25,
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793956500,
+   "level": 108.86,
+   "formedClose": 1793957400,
+   "windowStart": 1793957400,
+   "deadline": 1793965500,
+   "setup": {
+    "entry": 108.86,
+    "stop": 108.962,
+    "altStop": 108.88,
+    "tp": 108.758,
+    "riskPips": 10.2,
+    "warnings": [],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "London",
+   "status": "won",
+   "upgrades": [],
+   "tapTime": 1793957400,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793959200,
+   "managedResult": "TP",
+   "journaled": "won||0|TP"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793962800:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 3600,
+   "dir": "bull",
+   "candleOpen": 1793962800,
+   "level": 0.68692,
+   "formedClose": 1793963700,
+   "windowStart": 1793966400,
+   "deadline": 1793998800,
+   "setup": {
+    "entry": 0.68692,
+    "stop": 0.68611,
+    "altStop": 0.6869,
+    "tp": 0.68773,
+    "riskPips": 8.1,
+    "warnings": [],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "London",
+   "status": "lost",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "shadow": true,
+   "skipReason": "trend (15m bear×1, 4H bear)",
+   "tapTime": 1793971800,
+   "tapIndex": 2,
+   "muted": true,
+   "resultTime": 1793971800,
+   "managedResult": "SL",
+   "journaled": "lost||2|SL"
+  },
+  {
+   "id": "OANDA:AUDJPY:1793964600:bear",
+   "num": 26,
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793964600,
+   "level": 108.833,
+   "formedClose": 1793965500,
+   "windowStart": 1793965500,
+   "deadline": 1793973600,
+   "setup": {
+    "entry": 108.833,
+    "stop": 108.89,
+    "altStop": 108.854,
+    "tp": 108.776,
+    "riskPips": 5.7,
+    "warnings": [
+     "Unfilled void against the trade at 108.838–109.446"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "London",
+   "status": "lost",
+   "upgrades": [],
+   "tapTime": 1793965800,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793967360,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793967300:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793967300,
+   "level": 0.68772,
+   "formedClose": 1793968200,
+   "windowStart": 1793968200,
+   "deadline": 1793976300,
+   "setup": {
+    "entry": 0.68772,
+    "stop": 0.68611,
+    "altStop": 0.68721,
+    "tp": 0.68933,
+    "riskPips": 16.1,
+    "warnings": [
+     "Untapped bullish no-wick at 0.68692 sat inside the normal stop — stop moved beyond the swing low at 0.68621",
+     "Unfilled void against the trade at 0.6869–0.68772",
+     "TP is beyond a swing high at 0.68889 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "London",
+   "status": "lost",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "trend (15m bear×1, 4H bear)",
+   "tapTime": 1793968320,
+   "tapIndex": 1,
+   "muted": false,
+   "beSignal": {
+    "time": 1793970000,
+    "at": 0.68809,
+    "mode": "tp"
+   },
+   "managed": {
+    "stop": 0.68611,
+    "tp": 0.68772
+   },
+   "managedResult": "BE",
+   "resultTime": 1793971800,
+   "journaled": "lost||0|BE"
+  },
+  {
+   "id": "OANDA:AUDJPY:1793967300:bull",
+   "num": 27,
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793967300,
+   "level": 108.852,
+   "formedClose": 1793968200,
+   "windowStart": 1793968200,
+   "deadline": 1793976300,
+   "setup": {
+    "entry": 108.852,
+    "stop": 108.686,
+    "altStop": 108.798,
+    "tp": 109.018,
+    "riskPips": 16.6,
+    "warnings": [
+     "Untapped bullish no-wick below at 108.622 — price may pull back to it",
+     "Unfilled void against the trade at 108.471–108.832",
+     "TP is beyond a swing high at 109.002 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 2
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "London",
+   "status": "lost",
+   "upgrades": [],
+   "tapTime": 1793970240,
+   "tapIndex": 3,
+   "muted": false,
+   "resultTime": 1793973840,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793969100:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793969100,
+   "level": 0.68809,
+   "formedClose": 1793970000,
+   "windowStart": 1793970000,
+   "deadline": 1793978100,
+   "setup": {
+    "entry": 0.68809,
+    "stop": 0.68835,
+    "altStop": 0.68825,
+    "tp": 0.68783,
+    "riskPips": 2.6,
+    "warnings": [
+     "Unfilled void against the trade at 0.68934–0.69214"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "lost",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "red-folder news",
+   "tapTime": 1793976060,
+   "tapIndex": 7,
+   "muted": false,
+   "resultTime": 1793976060,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:GBPUSD:1793969100:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793969100,
+   "level": 1.33952,
+   "formedClose": 1793970000,
+   "windowStart": 1793970000,
+   "deadline": 1793978100,
+   "setup": {
+    "entry": 1.33952,
+    "stop": 1.3404,
+    "altStop": 1.34022,
+    "tp": 1.33864,
+    "riskPips": 8.8,
+    "warnings": [
+     "Unfilled void against the trade at 1.34257–1.34476",
+     "Unfilled void against the trade at 1.33996–1.34326",
+     "TP is beyond a swing low at 1.33912 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "1.3411–1.34137",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 3
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "won",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "red-folder news",
+   "tapTime": 1793971320,
+   "tapIndex": 2,
+   "muted": true,
+   "resultTime": 1793971560,
+   "managedResult": "TP",
+   "journaled": "won||0|TP"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793970900:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793970900,
+   "level": 0.6875,
+   "formedClose": 1793971800,
+   "windowStart": 1793971800,
+   "deadline": 1793979900,
+   "setup": {
+    "entry": 0.6875,
+    "stop": 0.68711,
+    "altStop": 0.68742,
+    "tp": 0.68789,
+    "riskPips": 3.9,
+    "warnings": [
+     "Untapped bullish no-wick below at 0.68692 — price may pull back to it"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "lost",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "red-folder news",
+   "tapTime": 1793971800,
+   "tapIndex": 1,
+   "muted": true,
+   "resultTime": 1793971800,
+   "managedResult": "SL",
+   "journaled": "lost||0|SL"
+  },
+  {
+   "id": "OANDA:AUDUSD:1793979000:bear",
+   "num": 28,
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793979000,
+   "level": 0.68826,
+   "formedClose": 1793979900,
+   "windowStart": 1793979900,
+   "deadline": 1793988000,
+   "setup": {
+    "entry": 0.68826,
+    "stop": 0.68944,
+    "altStop": 0.68932,
+    "tp": 0.68708,
+    "riskPips": 11.8,
+    "warnings": [
+     "TP is beyond a swing low at 0.68742 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "won",
+   "upgrades": [],
+   "tapTime": 1793980320,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793981520,
+   "managedResult": "TP",
+   "journaled": "won|TP|0|TP",
+   "reported": "TP",
+   "reportedAt": 1793982012
+  },
+  {
+   "id": "OANDA:AUDUSD:1793984400:bear",
+   "num": 29,
+   "pair": "OANDA:AUDUSD",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793984400,
+   "level": 0.68738,
+   "formedClose": 1793985300,
+   "windowStart": 1793988000,
+   "deadline": 1794193200,
+   "setup": {
+    "entry": 0.68738,
+    "stop": 0.68944,
+    "altStop": 0.68788,
+    "tp": 0.68532,
+    "riskPips": 20.6,
+    "warnings": [
+     "Untapped bearish no-wick above at 0.69164 — price may pull back to it",
+     "Unfilled void against the trade at 0.69594–0.70145",
+     "Unfilled void against the trade at 0.69304–0.69596",
+     "TP is beyond a swing low at 0.68544 — consider pulling TP in",
+     "Large stop: 20.6 pips",
+     "Unfilled void against the trade at 0.6895–0.69384",
+     "Unfilled void against the trade at 0.68739–0.68923"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "active",
+   "upgrades": [
+    1800,
+    3600
+   ]
+  },
+  {
+   "id": "OANDA:AUDJPY:1793984400:bear",
+   "num": 30,
+   "pair": "OANDA:AUDJPY",
+   "tf": 3600,
+   "dir": "bear",
+   "candleOpen": 1793984400,
+   "level": 108.764,
+   "formedClose": 1793985300,
+   "windowStart": 1793988000,
+   "deadline": 1794193200,
+   "setup": {
+    "entry": 108.764,
+    "stop": 109.49,
+    "altStop": 109.129,
+    "tp": 108.038,
+    "riskPips": 72.6,
+    "warnings": [
+     "Unfilled void against the trade at 109.55–111.094",
+     "Unfilled void against the trade at 109.146–109.642",
+     "TP is beyond a swing low at 108.438 — consider pulling TP in",
+     "Large stop: 72.6 pips",
+     "Unfilled void against the trade at 108.766–109.115"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "tracking",
+   "upgrades": [
+    1800,
+    3600
+   ],
+   "tapTime": 1793991120,
+   "tapIndex": 1,
+   "muted": false
+  },
+  {
+   "id": "OANDA:AUDUSD:1793990700:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793990700,
+   "level": 0.68652,
+   "formedClose": 1793991600,
+   "windowStart": 1793991600,
+   "deadline": 1793999700,
+   "setup": {
+    "entry": 0.68652,
+    "stop": 0.68596,
+    "altStop": 0.68621,
+    "tp": 0.68708,
+    "riskPips": 5.6,
+    "warnings": [],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "tracking",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "trend (15m bear×1, 4H bear)",
+   "tapTime": 1793993700,
+   "tapIndex": 3,
+   "muted": false,
+   "beSignal": {
+    "time": 1793997000,
+    "at": 0.6868,
+    "mode": "stop"
+   },
+   "managed": {
+    "stop": 0.68652,
+    "tp": 0.68708
+   },
+   "managedResult": "BE"
+  },
+  {
+   "id": "OANDA:GBPUSD:1793994300:bear",
+   "num": 31,
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793994300,
+   "level": 1.33532,
+   "formedClose": 1793995200,
+   "windowStart": 1793995200,
+   "deadline": 1794176100,
+   "setup": {
+    "entry": 1.33532,
+    "stop": 1.33586,
+    "altStop": 1.33542,
+    "tp": 1.33478,
+    "riskPips": 5.4,
+    "warnings": [
+     "TP is beyond a swing low at 1.33502 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "1.3379–1.3381",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 5
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "won",
+   "upgrades": [],
+   "tapTime": 1793995680,
+   "tapIndex": 1,
+   "muted": false,
+   "resultTime": 1793998200,
+   "managedResult": "TP",
+   "journaled": "won|TP|0|TP",
+   "reported": "TP",
+   "reportedAt": 1793998817
+  },
+  {
+   "id": "OANDA:AUDUSD:1793996100:bear",
+   "num": 32,
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793996100,
+   "level": 0.6868,
+   "formedClose": 1793997000,
+   "windowStart": 1793997000,
+   "deadline": 1794177900,
+   "setup": {
+    "entry": 0.6868,
+    "stop": 0.68704,
+    "altStop": 0.68688,
+    "tp": 0.68656,
+    "riskPips": 2.4,
+    "warnings": [
+     "Untapped bearish no-wick above at 0.68738 — price may pull back to it",
+     "TP is beyond a swing low at 0.68657 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "active",
+   "upgrades": [],
+   "reported": "TP",
+   "reportedAt": 1793998817,
+   "journaled": "active|TP|0|"
+  },
+  {
+   "id": "OANDA:AUDJPY:1793996100:bear",
+   "num": 33,
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793996100,
+   "level": 108.86,
+   "formedClose": 1793997000,
+   "windowStart": 1793997000,
+   "deadline": 1794177900,
+   "setup": {
+    "entry": 108.86,
+    "stop": 109.139,
+    "altStop": 108.882,
+    "tp": 108.581,
+    "riskPips": 27.9,
+    "warnings": [
+     "TP is beyond a swing low at 108.758 — consider pulling TP in",
+     "Large stop: 27.9 pips"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bull",
+    "count": 1
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "tracking",
+   "upgrades": [],
+   "tapTime": 1794002220,
+   "tapIndex": 6,
+   "muted": false
+  },
+  {
+   "id": "OANDA:AUDUSD:1793997900:bear",
+   "num": 34,
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1793997900,
+   "level": 0.68656,
+   "formedClose": 1793998800,
+   "windowStart": 1793998800,
+   "deadline": 1794179700,
+   "setup": {
+    "entry": 0.68656,
+    "stop": 0.68704,
+    "altStop": 0.6868,
+    "tp": 0.68608,
+    "riskPips": 4.8,
+    "warnings": [
+     "Untapped bearish no-wick at 0.6868 sat inside the normal stop — stop moved beyond the swing high at 0.68694",
+     "Untapped bearish no-wick above at 0.68738 — price may pull back to it",
+     "Unfilled void against the trade at 0.68657–0.68692",
+     "TP is beyond a swing low at 0.68621 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "0.6989–0.6991",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 2
+   },
+   "external": {
+    "dir": "bear",
+    "count": 3
+   },
+   "session": "New York",
+   "status": "tracking",
+   "upgrades": [],
+   "tapTime": 1794002220,
+   "tapIndex": 4,
+   "muted": false
+  },
+  {
+   "id": "OANDA:GBPUSD:1793998800:bull",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bull",
+   "candleOpen": 1793998800,
+   "level": 1.335,
+   "formedClose": 1793999700,
+   "windowStart": 1793999700,
+   "deadline": 1794180600,
+   "setup": {
+    "entry": 1.335,
+    "stop": 1.33438,
+    "altStop": 1.33484,
+    "tp": 1.33562,
+    "riskPips": 6.2,
+    "warnings": [],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "1.3379–1.3381",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 6
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "tracking",
+   "upgrades": [],
+   "shadow": true,
+   "skipReason": "trend (15m bear×6, 4H bear)",
+   "tapTime": 1794000540,
+   "tapIndex": 1,
+   "muted": false,
+   "beSignal": {
+    "time": 1794001500,
+    "at": 1.33502,
+    "mode": "stop"
+   },
+   "managed": {
+    "stop": 1.335,
+    "tp": 1.33562
+   },
+   "managedResult": "BE"
+  },
+  {
+   "id": "OANDA:GBPUSD:1794000600:bear",
+   "num": 35,
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "candleOpen": 1794000600,
+   "level": 1.33502,
+   "formedClose": 1794001500,
+   "windowStart": 1794001500,
+   "deadline": 1794182400,
+   "setup": {
+    "entry": 1.33502,
+    "stop": 1.33586,
+    "altStop": 1.33522,
+    "tp": 1.33418,
+    "riskPips": 8.4,
+    "warnings": [
+     "TP is beyond a swing low at 1.33448 — consider pulling TP in"
+    ],
+    "notes": [],
+    "da": {
+     "below": "",
+     "above": "1.3379–1.3381",
+     "rangePos": null,
+     "inDA": false,
+     "tpBeyond": ""
+    }
+   },
+   "internal": {
+    "dir": "bear",
+    "count": 6
+   },
+   "external": {
+    "dir": "bear",
+    "count": 1
+   },
+   "session": "New York",
+   "status": "tracking",
+   "upgrades": [],
+   "tapTime": 1794001500,
+   "tapIndex": 1,
+   "muted": false
+  }
+ ],
+ "results": [
+  {
+   "id": "OANDA:AUDUSD:1793824200:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "lost",
+   "formed": 1793825100,
+   "tapped": 1793825100,
+   "closed": 1793830920,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793829600:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "lost",
+   "formed": 1793830500,
+   "tapped": 1793830500,
+   "closed": 1793830920,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793834100:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "won",
+   "formed": 1793835000,
+   "tapped": 1793835000,
+   "closed": 1793837220,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793830500:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "lost",
+   "formed": 1793831400,
+   "tapped": 1793836200,
+   "closed": 1793837940,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:GBPUSD:1793820600:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "lost",
+   "formed": 1793821500,
+   "tapped": 1793822280,
+   "closed": 1793836260
+  },
+  {
+   "id": "OANDA:AUDUSD:1793820600:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 1800,
+   "dir": "bear",
+   "outcome": "lost",
+   "formed": 1793821500,
+   "tapped": 1793822400,
+   "closed": 1793843460
+  },
+  {
+   "id": "OANDA:AUDUSD:1793826000:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 3600,
+   "dir": "bear",
+   "outcome": "lost",
+   "formed": 1793826900,
+   "tapped": 1793837460,
+   "closed": 1793846760,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793844900:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "won",
+   "formed": 1793845800,
+   "tapped": 1793847360,
+   "closed": 1793848500,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:GBPUSD:1793848500:bull",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "won",
+   "formed": 1793849400,
+   "tapped": 1793849880,
+   "closed": 1793851860
+  },
+  {
+   "id": "OANDA:GBPUSD:1793861100:bull",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "lost",
+   "formed": 1793862000,
+   "tapped": 1793862840,
+   "closed": 1793863080
+  },
+  {
+   "id": "OANDA:AUDUSD:1793859300:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "won",
+   "formed": 1793860200,
+   "tapped": 1793863740,
+   "closed": 1793866080,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793871900:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "won",
+   "formed": 1793872800,
+   "tapped": 1793874000,
+   "closed": 1793876460,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:GBPUSD:1793871900:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "won",
+   "formed": 1793872800,
+   "tapped": 1793873280,
+   "closed": 1793879400
+  },
+  {
+   "id": "OANDA:AUDUSD:1793861100:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "lost",
+   "formed": 1793862000,
+   "tapped": 1793863320,
+   "closed": 1793881440,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793839500:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "lost",
+   "formed": 1793840400,
+   "tapped": 1793841120,
+   "closed": 1793881980,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:GBPUSD:1793880000:bull",
+   "pair": "OANDA:GBPUSD",
+   "tf": 3600,
+   "dir": "bull",
+   "outcome": "lost",
+   "formed": 1793880900,
+   "tapped": 1793907060,
+   "closed": 1793907240,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793929500:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "lost",
+   "formed": 1793930400,
+   "tapped": 1793930520,
+   "closed": 1793932860,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:GBPUSD:1793908800:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 3600,
+   "dir": "bear",
+   "outcome": "won",
+   "formed": 1793909700,
+   "tapped": 1793916240,
+   "closed": 1793936640,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDJPY:1793913300:bear",
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "won",
+   "formed": 1793914200,
+   "tapped": 1793916240,
+   "closed": 1793943060
+  },
+  {
+   "id": "OANDA:GBPUSD:1793907000:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "won",
+   "formed": 1793907900,
+   "tapped": 1793907900,
+   "closed": 1793947500,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDJPY:1793956500:bear",
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "won",
+   "formed": 1793957400,
+   "tapped": 1793957400,
+   "closed": 1793959200
+  },
+  {
+   "id": "OANDA:AUDJPY:1793964600:bear",
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "lost",
+   "formed": 1793965500,
+   "tapped": 1793965800,
+   "closed": 1793967360
+  },
+  {
+   "id": "OANDA:GBPUSD:1793969100:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "muted",
+   "formed": 1793970000,
+   "tapped": 1793971320,
+   "closed": 1793971560,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793952000:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "won",
+   "formed": 1793952900,
+   "tapped": 1793952900,
+   "closed": 1793971800
+  },
+  {
+   "id": "OANDA:AUDUSD:1793962800:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 3600,
+   "dir": "bull",
+   "outcome": "muted",
+   "formed": 1793963700,
+   "tapped": 1793971800,
+   "closed": 1793971800,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793967300:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "lost",
+   "formed": 1793968200,
+   "tapped": 1793968320,
+   "closed": 1793971800,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793970900:bull",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "muted",
+   "formed": 1793971800,
+   "tapped": 1793971800,
+   "closed": 1793971800,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDJPY:1793967300:bull",
+   "pair": "OANDA:AUDJPY",
+   "tf": 900,
+   "dir": "bull",
+   "outcome": "lost",
+   "formed": 1793968200,
+   "tapped": 1793970240,
+   "closed": 1793973840
+  },
+  {
+   "id": "OANDA:AUDUSD:1793969100:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "lost",
+   "formed": 1793970000,
+   "tapped": 1793976060,
+   "closed": 1793976060,
+   "shadow": true
+  },
+  {
+   "id": "OANDA:AUDUSD:1793979000:bear",
+   "pair": "OANDA:AUDUSD",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "won",
+   "formed": 1793979900,
+   "tapped": 1793980320,
+   "closed": 1793981520
+  },
+  {
+   "id": "OANDA:GBPUSD:1793994300:bear",
+   "pair": "OANDA:GBPUSD",
+   "tf": 900,
+   "dir": "bear",
+   "outcome": "won",
+   "formed": 1793995200,
+   "tapped": 1793995680,
+   "closed": 1793998200
+  }
+ ],
+ "sent": {
+  "OANDA:AUDUSD:1793820600:bear:formed": 1793821852,
+  "OANDA:GBPUSD:1793820600:bear:formed": 1793821852,
+  "manual:1793821570": 1793821852,
+  "manual:1793821852": 1793821852,
+  "OANDA:AUDUSD:1793820600:bear:up1800": 1793822696,
+  "OANDA:AUDUSD:1793820600:bear:tap": 1793822696,
+  "OANDA:GBPUSD:1793820600:bear:tap": 1793822696,
+  "manual:1793822696": 1793822696,
+  "manual:1793823755": 1793823755,
+  "OANDA:AUDUSD:1793820600:bear:be": 1793825151,
+  "manual:1793825151": 1793825151,
+  "manual:1793826316": 1793826316,
+  "manual:1793827359": 1793827359,
+  "manual:1793829009": 1793829009,
+  "OANDA:GBPUSD:1793820600:bear:be": 1793840957,
+  "OANDA:GBPUSD:1793820600:bear:result": 1793840957,
+  "report:604593045:0": 1793840957,
+  "OANDA:AUDUSD:1793820600:bear:result": 1793854936,
+  "OANDA:GBPUSD:1793848500:bull:formed": 1793854936,
+  "OANDA:GBPUSD:1793848500:bull:tap": 1793854936,
+  "OANDA:GBPUSD:1793848500:bull:result": 1793854936,
+  "checkin:2026-11-05": 1793854936,
+  "manual:1793854936": 1793854936,
+  "manual:1793860734": 1793860734,
+  "OANDA:GBPUSD:1793861100:bull:formed": 1793862849,
+  "OANDA:GBPUSD:1793861100:bull:tap": 1793862914,
+  "OANDA:GBPUSD:1793861100:bull:result": 1793863216,
+  "OANDA:GBPUSD:1793871900:bear:formed": 1793872816,
+  "OANDA:GBPUSD:1793871900:bear:tap": 1793873414,
+  "report:604593046:0": 1793879116,
+  "OANDA:GBPUSD:1793871900:bear:result": 1793879711,
+  "warn:inbox:1793883600": 1793886314,
+  "warn:feed:OANDA:GBPUSD:1793887200": 1793889312,
+  "warn:feed:OANDA:AUDUSD:1793887200": 1793890511,
+  "warn:feed:OANDA:AUDUSD:1793894400": 1793894416,
+  "warn:feed:OANDA:GBPUSD:1793894400": 1793894416,
+  "warn:feed:OANDA:AUDJPY:1793894400": 1793894416,
+  "OANDA:AUDUSD:1793898000:bear:formed": 1793898913,
+  "OANDA:AUDJPY:1793898000:bear:formed": 1793898913,
+  "OANDA:AUDJPY:1793898000:bear:up1800": 1793899820,
+  "OANDA:AUDUSD:1793898000:bear:up1800": 1793900112,
+  "OANDA:AUDUSD:1793898000:bear:up3600": 1793901617,
+  "OANDA:AUDJPY:1793898000:bear:up3600": 1793901617,
+  "OANDA:AUDJPY:1793903400:bear:formed": 1793904314,
+  "OANDA:AUDJPY:1793903400:bear:up1800": 1793905216,
+  "OANDA:AUDJPY:1793903400:bear:tap": 1793906114,
+  "OANDA:AUDUSD:1793908800:bear:formed": 1793909719,
+  "OANDA:AUDJPY:1793908800:bear:formed": 1793909719,
+  "OANDA:AUDUSD:1793908800:bear:up1800": 1793910616,
+  "OANDA:AUDJPY:1793908800:bear:up1800": 1793910616,
+  "report:604593047:0": 1793911822,
+  "OANDA:AUDUSD:1793908800:bear:up3600": 1793912418,
+  "OANDA:AUDJPY:1793908800:bear:up3600": 1793912418,
+  "OANDA:AUDUSD:1793912400:bear:formed": 1793913319,
+  "OANDA:AUDUSD:1793912400:bear:up1800": 1793914214,
+  "OANDA:AUDJPY:1793913300:bear:formed": 1793914214,
+  "OANDA:AUDUSD:1793912400:bear:up3600": 1793916016,
+  "OANDA:AUDUSD:1793912400:bear:tap": 1793916343,
+  "OANDA:AUDJPY:1793913300:bear:tap": 1793916343,
+  "OANDA:AUDUSD:1793912400:bear:be": 1793930415,
+  "checkin:2026-11-06": 1793934015,
+  "OANDA:AUDUSD:1793934000:bear:formed": 1793934922,
+  "OANDA:AUDUSD:1793934000:bear:up1800": 1793935813,
+  "OANDA:AUDUSD:1793934000:bear:up3600": 1793937617,
+  "OANDA:AUDJPY:1793913300:bear:result": 1793943310,
+  "OANDA:AUDJPY:1793948400:bear:formed": 1793949315,
+  "OANDA:AUDJPY:1793948400:bear:up1800": 1793950217,
+  "OANDA:AUDJPY:1793948400:bear:up3600": 1793952016,
+  "OANDA:AUDUSD:1793952000:bear:formed": 1793952913,
+  "OANDA:AUDUSD:1793952000:bear:tap": 1793953219,
+  "OANDA:AUDJPY:1793948400:bear:tap": 1793955618,
+  "OANDA:AUDJPY:1793903400:bear:be": 1793955618,
+  "OANDA:AUDJPY:1793956500:bear:formed": 1793957413,
+  "OANDA:AUDJPY:1793956500:bear:tap": 1793957713,
+  "OANDA:AUDJPY:1793956500:bear:result": 1793959511,
+  "report:604593048:0": 1793961612,
+  "OANDA:AUDUSD:1793952000:bear:be": 1793963718,
+  "OANDA:AUDJPY:1793964600:bear:formed": 1793965514,
+  "OANDA:AUDJPY:1793964600:bear:tap": 1793966113,
+  "OANDA:AUDJPY:1793964600:bear:result": 1793967613,
+  "OANDA:AUDJPY:1793948400:bear:be": 1793968215,
+  "OANDA:AUDJPY:1793967300:bull:formed": 1793968215,
+  "OANDA:AUDJPY:1793967300:bull:tap": 1793970315,
+  "OANDA:AUDUSD:1793952000:bear:result": 1793972111,
+  "OANDA:AUDJPY:1793967300:bull:result": 1793973913,
+  "OANDA:AUDUSD:1793979000:bear:formed": 1793979915,
+  "OANDA:AUDUSD:1793979000:bear:tap": 1793980510,
+  "OANDA:AUDUSD:1793979000:bear:result": 1793981718,
+  "report:604593049:0": 1793982012,
+  "OANDA:AUDUSD:1793984400:bear:formed": 1793985313,
+  "OANDA:AUDJPY:1793984400:bear:formed": 1793985313,
+  "OANDA:AUDUSD:1793984400:bear:up1800": 1793986214,
+  "OANDA:AUDJPY:1793984400:bear:up1800": 1793986214,
+  "report:604593050:0": 1793987113,
+  "OANDA:AUDUSD:1793984400:bear:up3600": 1793988018,
+  "OANDA:AUDJPY:1793984400:bear:up3600": 1793988018,
+  "stats:604593051": 1793988018,
+  "OANDA:AUDJPY:1793984400:bear:tap": 1793991310,
+  "OANDA:GBPUSD:1793994300:bear:formed": 1793995216,
+  "OANDA:GBPUSD:1793994300:bear:tap": 1793995816,
+  "OANDA:AUDUSD:1793996100:bear:formed": 1793997015,
+  "OANDA:AUDJPY:1793996100:bear:formed": 1793997015,
+  "OANDA:GBPUSD:1793994300:bear:result": 1793998512,
+  "OANDA:AUDUSD:1793997900:bear:formed": 1793998817,
+  "OANDA:GBPUSD:1794000600:bear:formed": 1794001514,
+  "OANDA:GBPUSD:1794000600:bear:tap": 1794001815,
+  "OANDA:AUDUSD:1793997900:bear:tap": 1794002415,
+  "OANDA:AUDJPY:1793996100:bear:tap": 1794002415,
+  "recap:1794002400": 1794002415
+ },
+ "failed": {
+  "checkin:2026-11-04": 1793821265
+ },
+ "outbox": [],
+ "news": {
+  "ok": true,
+  "fetchedAt": 1794051012,
+  "events": [
+   {
+    "t": 1793676600,
+    "country": "AUD",
+    "title": "Cash Rate"
+   },
+   {
+    "t": 1793676600,
+    "country": "AUD",
+    "title": "RBA Monetary Policy Statement"
+   },
+   {
+    "t": 1793676600,
+    "country": "AUD",
+    "title": "RBA Rate Statement"
+   },
+   {
+    "t": 1793680200,
+    "country": "AUD",
+    "title": "RBA Press Conference"
+   },
+   {
+    "t": 1793718960,
+    "country": "USD",
+    "title": "Congressional Elections"
+   },
+   {
+    "t": 1793742300,
+    "country": "NZD",
+    "title": "Employment Change q/q"
+   },
+   {
+    "t": 1793742300,
+    "country": "NZD",
+    "title": "Unemployment Rate"
+   },
+   {
+    "t": 1793880000,
+    "country": "GBP",
+    "title": "BOE Monetary Policy Report"
+   },
+   {
+    "t": 1793880000,
+    "country": "GBP",
+    "title": "Monetary Policy Summary"
+   },
+   {
+    "t": 1793880000,
+    "country": "GBP",
+    "title": "MPC Official Bank Rate Votes"
+   },
+   {
+    "t": 1793880000,
+    "country": "GBP",
+    "title": "Official Bank Rate"
+   },
+   {
+    "t": 1793881800,
+    "country": "GBP",
+    "title": "BOE Gov Bailey Speaks"
+   },
+   {
+    "t": 1793971800,
+    "country": "CAD",
+    "title": "Employment Change"
+   },
+   {
+    "t": 1793971800,
+    "country": "CAD",
+    "title": "Unemployment Rate"
+   },
+   {
+    "t": 1793971800,
+    "country": "USD",
+    "title": "Average Hourly Earnings m/m"
+   },
+   {
+    "t": 1793971800,
+    "country": "USD",
+    "title": "Non-Farm Employment Change"
+   },
+   {
+    "t": 1793971800,
+    "country": "USD",
+    "title": "Unemployment Rate"
+   },
+   {
+    "t": 1793980800,
+    "country": "JPY",
+    "title": "BOJ Gov Ueda Speaks"
+   },
+   {
+    "t": 1794001500,
+    "country": "NZD",
+    "title": "Parliamentary Elections"
+   }
+  ]
+ },
+ "throttle": {
+  "inbox": 1793886314,
+  "feed:OANDA:GBPUSD": 1793894416,
+  "feed:OANDA:AUDUSD": 1793894416,
+  "feed:OANDA:AUDJPY": 1793894416
+ },
+ "lastCheckin": "2026-11-06",
+ "lastRecap": 1794002400,
+ "nextNum": 36,
+ "tgOffset": 604593053,
+ "inboxFails": 0
+}
