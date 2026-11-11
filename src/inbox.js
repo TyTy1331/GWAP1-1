@@ -9,11 +9,12 @@ export function parseReports(text) {
   return [...String(text).matchAll(REPORT)].map((m) => ({ num: Number(m[1]), outcome: m[2].toUpperCase().replace('/', '') }));
 }
 
-// A bare "TP" / "sl" / "b/e" sent as a Telegram reply to an alert counts for the trade number in that alert.
+// "TP" / "sl" / "b/e" / "invalid" sent as a Telegram reply to an alert counts for the trade number in that alert.
 export function replyReport(msg) {
-  const m = /^\s*(TP|SL|B\/?E|INVALID)\s*[.!✅❌]*\s*$/i.exec(msg.text ?? '');
+  // TP/SL/BE must stand alone; "invalid" may be followed by a reason ("invalid after missing entry").
+  const m = /^\s*(?:(TP|SL|B\/?E)\s*[.!✅❌]*\s*$|(INVALID)\b)/i.exec(msg.text ?? '');
   const num = /#(\d{1,3})\b/.exec(msg.reply_to_message?.text ?? '');
-  return m && num ? `#${num[1]}${m[1]}` : null;
+  return m && num ? `#${num[1]}${m[1] ?? m[2]}` : null;
 }
 
 const label = (l) => `${tag(l.num)} ${l.pair.split(':').pop()} ${TF_LABEL[l.tf]} ${l.dir === 'bull' ? 'BUY' : 'SELL'}`;

@@ -86,7 +86,7 @@ test('"invalid" (as #05 invalid or a reply to the alert) silences the trade and 
   assert.deepEqual(parseReports('#05 invalid'), [{ num: 5, outcome: 'INVALID' }]);
   const s = freshState();
   s.levels.push(lvl(5, { status: 'active', upgrades: [], candleOpen: 1000, level: 0.7, session: 'London' }));
-  const reply = { update_id: 1, message: { chat: { id: 873516785 }, text: 'Invalid', reply_to_message: { text: '🔴 #05 AUDUSD 15m SELL' } } };
+  const reply = { update_id: 1, message: { chat: { id: 873516785 }, text: 'Invalid after missing entry', reply_to_message: { text: '🔴 #05 AUDUSD 15m SELL' } } };
   const [r] = await readInbox(s, { token: 't', chatId: '873516785', now: 9, fetchFn: updates([reply]) });
   assert.match(r.text, /#05 AUDUSD 15m SELL marked invalid/);
   assert.equal(s.levels[0].invalid, 'user said invalid');
