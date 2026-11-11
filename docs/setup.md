@@ -75,7 +75,7 @@ If the run fails with a TradingView error, GitHub's servers may be blocked from 
 | 🔼 upgraded | The 30m or 1H candle is also a no-wick. Tap window recalculated on that timeframe |
 | 🎯 tapped | Price touched the level inside its 9-candle window ("2/9" = 2nd candle) |
 | ✅ / ❌ | TP or stop was hit first |
-| ⏹ | A running trade was closed for the day at 23:55 SAST (or 5 minutes before Friday's market close), with its result in R. Prop-firm rule: nothing is held into the next day |
+| ⏹ | A running trade was closed for the day 5 minutes before the market's daily close (23:55 SAST in the New York winter, 22:55 SAST in its summer), with its result in R. Prop-firm rule: nothing is held into the next day |
 | 🚫 | The setup is no longer valid: price came within 2 pips of the no-wick without tapping it, then reached TP. Or you marked it invalid yourself |
 | 🛡️ | A no-wick formed against your open trade. In profit: move the stop to break-even. In drawdown: move TP to break-even (Bard's rule) |
 | ⚠️ | Something needs your eye: data stuck for 30+ min, Telegram replies failing 3 runs in a row, news calendar down, a data gap, a failed run. Single hiccups are retried quietly |

@@ -74,8 +74,8 @@ test('news feed failure keeps the cache and flags unavailable', async () => {
   assert.equal(fresh, cache, 'not refreshed within 6 hours');
 });
 
-test('flat time: 23:55 SAST all year, or 5 min before Friday\'s market close if earlier', () => {
+test('flat time follows the market close: 23:55 SAST in winter, 22:55 SAST in the New York summer', () => {
   assert.equal(flatTime(utc('2026-11-04T19:20:00Z')), utc('2026-11-04T21:55:00Z')); // winter
-  assert.equal(flatTime(utc('2026-07-01T10:00:00Z')), utc('2026-07-01T21:55:00Z')); // summer: NY closes 23:00 SAST, day still ends at midnight
-  assert.equal(flatTime(utc('2026-07-03T10:00:00Z')), utc('2026-07-03T20:55:00Z')); // summer Friday: market shuts at 23:00 SAST
+  assert.equal(flatTime(utc('2026-07-01T10:00:00Z')), utc('2026-07-01T20:55:00Z')); // summer: the market day ends 23:00 SAST
+  assert.equal(flatTime(utc('2026-07-03T10:00:00Z')), utc('2026-07-03T20:55:00Z')); // summer Friday: the week ends 23:00 SAST
 });
