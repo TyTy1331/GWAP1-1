@@ -5,7 +5,7 @@ import { noWickDir, upgradesLevel } from './nowick.js';
 import { analyze, trendAt, isValid } from './structure.js';
 import { buildSetup, recentNoWicks } from './setup.js';
 import { sessionAt, marketOpen, latestMarketClose, marketMinutesBetween, refreshNews, newsMute, upcomingNews, inWindow } from './filters.js';
-import { newLevel, upgrade, advanceMinute, markDataGap, prune, breakEvenSignals } from './lifecycle.js';
+import { newLevel, upgrade, advanceMinute, markDataGap, prune, breakEvenSignals, silent } from './lifecycle.js';
 import { loadState, saveState } from './state.js';
 import { formatEvent, enqueue, deliver, TelegramError } from './telegram.js';
 import { checkinDue, checkinText, recapText } from './reports.js';
@@ -99,7 +99,7 @@ export function processPair(state, pair, data, until, news) {
         if (built) built.warnings.push(...l.setup.warnings.filter((w) => w.startsWith('Unfilled void') && !built.warnings.includes(w)));
         const setup = built ? applyDA(built, l.dir, dasAt(it.t)) : l.setup;
         upgrade(l, it.tf, it.c, setup);
-        if (!l.shadow) events.push({ kind: 'upgrade', id: `${l.id}:up${it.tf}`, level: l, time: it.t });
+        if (!silent(l)) events.push({ kind: 'upgrade', id: `${l.id}:up${it.tf}`, level: l, time: it.t });
       }
     }
   }
@@ -189,7 +189,7 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
     }
     prune(state, now);
     if (env.GITHUB_EVENT_NAME === 'workflow_dispatch' && env.RUN_SOURCE !== 'cron') { // cron-job.org triggers stay silent
-      const live = state.levels.filter((l) => !l.shadow && (l.status === 'active' || l.status === 'tracking')).length;
+      const live = state.levels.filter((l) => !silent(l) && (l.status === 'active' || l.status === 'tracking')).length;
       enqueue(state, `manual:${now}`, `✅ Manual run OK. Market ${open ? 'open' : 'closed'}, ${live} live level(s).`);
     }
 

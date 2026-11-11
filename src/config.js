@@ -14,12 +14,12 @@ export const config = {
   displayZone: 'Africa/Johannesburg',
 
   // Alerts form only inside an allowed window and outside every excluded window.
-  // Your choice (2026-11-05): every hour except 00:00–05:00 SAST. Names are just labels in the alerts.
+  // Your choice (2026-11-11): 22:00–05:00 SAST is a no-trade zone (still tracked silently). Names are just labels.
   sessions: {
     allowed: [
       { name: 'Asia', zone: 'Africa/Johannesburg', start: '05:00', end: '10:00' },
       { name: 'London', zone: 'Africa/Johannesburg', start: '10:00', end: '15:00' },
-      { name: 'New York', zone: 'Africa/Johannesburg', start: '15:00', end: '24:00' },
+      { name: 'New York', zone: 'Africa/Johannesburg', start: '15:00', end: '22:00' },
     ],
     excluded: [],
   },
@@ -27,6 +27,8 @@ export const config = {
   marketZone: 'America/New_York',
 
   tapWindowCandles: 9,
+  flatBeforeCloseMinutes: 5, // prop-firm rule: running trades are closed this long before the daily 17:00 NY close
+  nearMissPips: 2,           // came this close without tapping, then reached TP → the setup is invalid
   structureBars: 500,
   dojiBodyPct: 0.10,
   stopBufferPips: 1.0,

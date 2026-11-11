@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { newLevel, advanceMinute, markDataGap, upgrade } from '../src/lifecycle.js';
 import { freshState } from '../src/state.js';
 import { utc } from './helpers/candles.js';
+import { formatEvent } from '../src/telegram.js';
 
 const PAIR = 'OANDA:AUDUSD';
 const setup = { entry: 0.7, stop: 0.6989, tp: 0.7011, altStop: null, riskPips: 11, warnings: [] };
@@ -71,17 +72,46 @@ test('tap during news: no alerts, outcome recorded as muted', () => {
   assert.equal(s.results[0].outcome, 'muted');
 });
 
-test('tap after the session ends but inside the window still alerts (winter, 22:10 SAST)', () => {
+test('tap in the no-trade zone (22:10 SAST) is tracked silently and kept out of the results', () => {
   const s = stateWithLevel(utc('2026-11-04T19:15:00Z')); // formed 21:30 SAST
-  const ev = advanceMinute(s, PAIR, m(utc('2026-11-04T20:10:00Z'), 0.69995, 0.7002), []);
-  assert.equal(ev[0].kind, 'tap');
+  const t = utc('2026-11-04T20:10:00Z');
+  assert.deepEqual(advanceMinute(s, PAIR, m(t, 0.69995, 0.7002), []), []);
+  assert.equal(s.levels[0].status, 'tracking');
+  assert.equal(s.levels[0].invalid, 'tapped in no-trade hours');
+  assert.deepEqual(advanceMinute(s, PAIR, m(t + 60, 0.7005, 0.7012), []), []);
+  assert.equal(s.levels[0].status, 'won');
+  assert.equal(s.results[0].shadow, true);
+});
+
+test('near miss: within 2 pips without a tap, then TP → invalid alert, later tap stays silent', () => {
+  const s = stateWithLevel();
+  const t = utc('2026-11-04T10:20:00Z');
+  assert.deepEqual(advanceMinute(s, PAIR, m(t, 0.7004, 0.7012), []), [], 'TP without coming close changes nothing');
+  assert.deepEqual(advanceMinute(s, PAIR, m(t + 60, 0.70015, 0.7005), []), [], 'near miss alone is quiet');
+  const ev = advanceMinute(s, PAIR, m(t + 120, 0.7006, 0.7011), []);
+  assert.deepEqual(ev.map((e) => e.kind), ['invalid']);
+  assert.equal(s.levels[0].invalid, 'near miss, then ran to TP');
+  assert.deepEqual(advanceMinute(s, PAIR, m(t + 180, 0.6999, 0.7003), []), []);
+  assert.equal(s.levels[0].status, 'tracking');
+});
+
+test('prop-firm rule: a running trade is closed 5 min before the daily 17:00 NY close', () => {
+  const s = stateWithLevel(utc('2026-11-04T19:00:00Z')); // 21:00 SAST
+  advanceMinute(s, PAIR, m(utc('2026-11-04T19:20:00Z'), 0.69995, 0.7002), []);
+  assert.deepEqual(advanceMinute(s, PAIR, m(utc('2026-11-04T21:54:00Z'), 0.7003, 0.7005), []), []);
+  const ev = advanceMinute(s, PAIR, m(utc('2026-11-04T21:55:00Z'), 0.7003, 0.7008), []); // 16:55 NY
+  assert.equal(ev[0].outcome, 'closed');
+  assert.equal(s.levels[0].status, 'closed');
+  assert.equal(s.levels[0].closedR, 0.5);
+  assert.deepEqual([s.results[0].outcome, s.results[0].r], ['closed', 0.5]);
+  assert.match(formatEvent(ev[0]), /closed before market close \(\+0\.5R\)/);
 });
 
 test('Friday 1H level tapped Sunday after the open, within 9 market candles', () => {
   const s = stateWithLevel(utc('2026-11-06T21:00:00Z'), 3600); // Fri 16:00 NY 1H
-  const ev = advanceMinute(s, PAIR, m(utc('2026-11-08T22:30:00Z'), 0.69995, 0.7002), []);
+  const ev = advanceMinute(s, PAIR, m(utc('2026-11-09T03:30:00Z'), 0.69995, 0.7002), []); // Mon 05:30 SAST
   assert.equal(ev[0].kind, 'tap');
-  assert.equal(s.levels[0].tapIndex, 1);
+  assert.equal(s.levels[0].tapIndex, 6);
 });
 
 test('replaying the same minute twice gives no new events', () => {

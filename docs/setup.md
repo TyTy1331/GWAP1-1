@@ -69,12 +69,14 @@ If the run fails with a TradingView error, GitHub's servers may be blocked from 
 
 | Message | Meaning |
 |---|---|
-| 🟡 BUY/SELL | A valid no-wick formed: trade number, pair, trend, session, tap deadline and any warnings. Entry, stop and TP are left to you |
+| 🟢 BUY / 🔴 SELL | A valid no-wick formed: trade number, pair, trend, session, tap deadline and any warnings. Entry, stop and TP are left to you |
 | 🧪 DA PLAY (experimental) | A counter-trend no-wick right after price held a **decision area** (see below). Only 1 BOS on the 15m against the 4H. Stop sits just beyond the DA. Tracked separately from normal setups |
 | ℹ️ | Good news on a setup, e.g. a decision area sits between entry and stop and protects it |
 | 🔼 upgraded | The 30m or 1H candle is also a no-wick. Tap window recalculated on that timeframe |
 | 🎯 tapped | Price touched the level inside its 9-candle window ("2/9" = 2nd candle) |
 | ✅ / ❌ | TP or stop was hit first |
+| ⏹ | A running trade was closed 5 minutes before the daily market close (17:00 New York), with its result in R. Prop-firm rule: nothing is held into the next day |
+| 🚫 | The setup is no longer valid: price came within 2 pips of the no-wick without tapping it, then reached TP. Or you marked it invalid yourself |
 | 🛡️ | A no-wick formed against your open trade. In profit: move the stop to break-even. In drawdown: move TP to break-even (Bard's rule) |
 | ⚠️ | Something needs your eye: data stuck for 30+ min, Telegram replies failing 3 runs in a row, news calendar down, a data gap, a failed run. Single hiccups are retried quietly |
 | 🤖 | Daily check-in at 05:00 SAST on market days. **If it stops arriving, the bot has stopped** |
@@ -106,7 +108,7 @@ The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA). For AUDJPY, 1 pip = 0.01.
 
 ## Trading hours and trend rule
 
-- **Hours:** alerts form at any time **except 00:00–05:00 SAST**. The session name in an alert (Asia / London / New York) is only a label. Red-folder news still mutes ±30 minutes.
+- **Hours:** **22:00–05:00 SAST is a no-trade zone.** No-wicks that form then, and taps that happen then, are not alerted; they are tracked quietly for the journal. The session name in an alert (Asia / London / New York) is only a label. Red-folder news still mutes ±30 minutes.
 - **Trend:** with the 4H, 1 BOS on the 15m is enough. A single 15m BOS against the 4H counts as a **pullback**, so trades with the 4H stay valid. The alert then says "aligned — 1 BOS against = pullback". Trading against the 4H still needs 2 BOS in a row.
 
 ## How stops and warnings work
@@ -126,6 +128,10 @@ The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA). For AUDJPY, 1 pip = 0.01.
 Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP`, `#05SL` or `#05BE` for break-even (`#5 tp` and `#5 b/e` work too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it. Easier: swipe-reply to any alert for that trade (formed, upgraded or tapped) with just `TP`, `SL` or `BE`. Send `/stats` any time for your TP/SL/BE and the bot's own 1:1 tracking over the last 7 and 30 days (answered on the next run). To show it in the Telegram command menu, send @BotFather `/setcommands`, pick the bot and send `stats - Win/loss stats`.
 
 The weekly recap then shows **Your trades** (what you reported; break-evens are listed but don't count toward the win rate) separately from **Bot tracking** (whether the exact 1:1 levels were hit). Your results can differ from the bot's when you pre-enter, move to break-even, or pull TP in. Only the chat the alerts go to can report trades.
+
+### Marking a trade invalid
+
+Swipe-reply to any alert for the trade with `invalid` (or send `#05 invalid`). The bot stops sending alerts for that trade and leaves it out of its own win/loss numbers. It keeps tracking it quietly, and the journal's `invalid` column shows "user said invalid". The same column shows "near miss, then ran to TP" or "tapped in no-trade hours" when the bot silenced a setup by itself.
 
 ## The trade journal (your data for analysis)
 

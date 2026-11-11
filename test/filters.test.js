@@ -8,11 +8,12 @@ import { utc } from './helpers/candles.js';
 const fixture = readFileSync(new URL('./fixtures/ff_calendar.json', import.meta.url), 'utf8');
 const news = parseNews(fixture);
 
-test('sessions: every hour except 00:00–05:00 SAST', () => {
+test('sessions: every hour except the 22:00–05:00 SAST no-trade zone', () => {
   assert.equal(sessionAt(utc('2026-11-04T03:00:00Z')), 'Asia');      // 05:00 SAST
   assert.equal(sessionAt(utc('2026-11-04T09:00:00Z')), 'London');    // 11:00 SAST
   assert.equal(sessionAt(utc('2026-11-04T14:00:00Z')), 'New York');  // 16:00 SAST
-  assert.equal(sessionAt(utc('2026-11-04T21:45:00Z')), 'New York');  // 23:45 SAST
+  assert.equal(sessionAt(utc('2026-11-04T19:45:00Z')), 'New York');  // 21:45 SAST
+  assert.equal(sessionAt(utc('2026-11-04T20:00:00Z')), null);        // 22:00 SAST
   assert.equal(sessionAt(utc('2026-11-04T22:00:00Z')), null);        // 00:00 SAST
   assert.equal(sessionAt(utc('2026-11-04T02:45:00Z')), null);        // 04:45 SAST
 });

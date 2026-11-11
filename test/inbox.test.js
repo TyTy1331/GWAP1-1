@@ -4,6 +4,8 @@ import { parseReports, applyReport, readInbox, replyReport } from '../src/inbox.
 import { recapText } from '../src/reports.js';
 import { formatEvent } from '../src/telegram.js';
 import { freshState } from '../src/state.js';
+import { silent } from '../src/lifecycle.js';
+import { journalRow } from '../src/journal.js';
 
 const lvl = (num, extra = {}) => ({ num, pair: 'OANDA:AUDUSD', tf: 900, dir: 'bear', formedClose: 1000 + num, status: 'won', ...extra });
 
@@ -78,6 +80,18 @@ test('a bare TP sent as a reply to an alert reports that alert number', async ()
   const reply = { update_id: 1, message: { chat: { id: 873516785 }, text: 'TP', reply_to_message: alert } };
   const [r] = await readInbox(s, { token: 't', chatId: '873516785', now: 9, fetchFn: updates([reply]) });
   assert.match(r.text, /#05 AUDUSD 15m SELL marked TP/);
+});
+
+test('"invalid" (as #05 invalid or a reply to the alert) silences the trade and shows in the journal', async () => {
+  assert.deepEqual(parseReports('#05 invalid'), [{ num: 5, outcome: 'INVALID' }]);
+  const s = freshState();
+  s.levels.push(lvl(5, { status: 'active', upgrades: [], candleOpen: 1000, level: 0.7, session: 'London' }));
+  const reply = { update_id: 1, message: { chat: { id: 873516785 }, text: 'Invalid', reply_to_message: { text: '🔴 #05 AUDUSD 15m SELL' } } };
+  const [r] = await readInbox(s, { token: 't', chatId: '873516785', now: 9, fetchFn: updates([reply]) });
+  assert.match(r.text, /#05 AUDUSD 15m SELL marked invalid/);
+  assert.equal(s.levels[0].invalid, 'user said invalid');
+  assert.equal(silent(s.levels[0]), true);
+  assert.ok(journalRow(s.levels[0]).endsWith(',user said invalid'));
 });
 
 test('reads past 100 messages in one run', async () => {

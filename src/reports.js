@@ -1,6 +1,7 @@
 import { config, TF_LABEL } from './config.js';
 import { localParts } from './filters.js';
 import { tag } from './telegram.js';
+import { silent } from './lifecycle.js';
 
 export function checkinDue(state, now) {
   const p = localParts(now, config.displayZone);
@@ -8,8 +9,8 @@ export function checkinDue(state, now) {
 }
 
 export function checkinText(state, now, dataAgeSec) {
-  const active = state.levels.filter((l) => !l.shadow && l.status === 'active').length;
-  const open = state.levels.filter((l) => !l.shadow && l.status === 'tracking').length;
+  const active = state.levels.filter((l) => !silent(l) && l.status === 'active').length;
+  const open = state.levels.filter((l) => !silent(l) && l.status === 'tracking').length;
   return `🤖 No-wick bot running. ${active} active level(s), ${open} open trade(s). Latest data ${Number.isFinite(dataAgeSec) ? `${Math.round(dataAgeSec / 60)} min old` : "not fetched this run"}.`;
 }
 
@@ -17,7 +18,7 @@ export function checkinText(state, now, dataAgeSec) {
 export function recapStats(results) {
   const groups = new Map();
   const add = (key, r) => {
-    const g = groups.get(key) ?? { won: 0, lost: 0, unknown: 0, muted: 0 };
+    const g = groups.get(key) ?? { won: 0, lost: 0, closed: 0, unknown: 0, muted: 0 };
     g[r.outcome]++;
     groups.set(key, g);
   };
@@ -38,7 +39,7 @@ function yourTrades(lines, label, reported) {
 }
 
 const statLine = (g) => `${g.key}: ${g.won}W / ${g.lost}L${g.rate !== null ? ` (${g.rate}%)` : ''}`
-  + `${g.unknown ? ` · ${g.unknown} unknown` : ''}${g.muted ? ` · ${g.muted} muted by news` : ''}`;
+  + `${g.closed ? ` · ${g.closed} closed at market close` : ''}${g.unknown ? ` · ${g.unknown} unknown` : ''}${g.muted ? ` · ${g.muted} muted by news` : ''}`;
 
 // da: experimental DA plays, kept out of the main numbers: { alerts, reported, results }.
 export function recapText(results, alertCount, reported = [], da = null) {
@@ -87,7 +88,7 @@ function period(state, now, days, heading) {
 
 // Reply to /stats: your reported trades and the bot's own tracking, last 7 and 30 days.
 export function statsText(state, now) {
-  const live = (s) => state.levels.filter((l) => !l.shadow && l.status === s).length;
+  const live = (s) => state.levels.filter((l) => !silent(l) && l.status === s).length;
   return [
     '📊 <b>Stats</b>',
     period(state, now, 7, 'Last 7 days'),

@@ -32,6 +32,12 @@ export function marketOpen(t, zone = config.marketZone) {
   return true;
 }
 
+// Next daily close (17:00 New York) strictly after t.
+export function nextDailyClose(t, zone = config.marketZone) {
+  const m = Math.floor(t / 60) * 60;
+  return m + (((17 * 60 - parts(m, zone).minutes + 1439) % 1440) + 1) * 60;
+}
+
 // Most recent Friday-17:00-NY close at or before t (NY offsets are whole hours, so 15-minute steps hit it exactly).
 export function latestMarketClose(t) {
   let x = Math.floor(t / 900) * 900;

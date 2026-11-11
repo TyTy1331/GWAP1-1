@@ -2,7 +2,7 @@ import { esc, tag } from './telegram.js';
 import { TF_LABEL } from './config.js';
 import { statsText } from './reports.js';
 
-const REPORT = /#(\d{1,3})\s*(TP|SL|B\/?E)\b/gi;
+const REPORT = /#(\d{1,3})\s*(TP|SL|B\/?E|INVALID)\b/gi;
 
 // "#05TP", "#5 sl", "#7BE", "#8 b/e", "#12 TP and #13SL" → [{num, outcome}]
 export function parseReports(text) {
@@ -11,7 +11,7 @@ export function parseReports(text) {
 
 // A bare "TP" / "sl" / "b/e" sent as a Telegram reply to an alert counts for the trade number in that alert.
 export function replyReport(msg) {
-  const m = /^\s*(TP|SL|B\/?E)\s*[.!✅❌]*\s*$/i.exec(msg.text ?? '');
+  const m = /^\s*(TP|SL|B\/?E|INVALID)\s*[.!✅❌]*\s*$/i.exec(msg.text ?? '');
   const num = /#(\d{1,3})\b/.exec(msg.reply_to_message?.text ?? '');
   return m && num ? `#${num[1]}${m[1]}` : null;
 }
@@ -22,6 +22,12 @@ const label = (l) => `${tag(l.num)} ${l.pair.split(':').pop()} ${TF_LABEL[l.tf]}
 export function applyReport(state, { num, outcome }, now) {
   const level = state.levels.filter((l) => l.num === num).sort((a, b) => b.formedClose - a.formedClose)[0];
   if (!level) return `❓ No trade ${tag(num)} found. Only the last 14 days are kept.`;
+  if (outcome === 'INVALID') {
+    // No more alerts for this trade; it stays tracked silently and leaves the bot's own numbers.
+    Object.assign(level, { invalid: 'user said invalid', invalidAt: now });
+    for (const r of state.results) if (r.id === level.id) r.shadow = true;
+    return `🚫 ${esc(label(level))} marked invalid. No more alerts for it; it is still tracked quietly for the journal.`;
+  }
   const changed = level.reported && level.reported !== outcome;
   Object.assign(level, { reported: outcome, reportedAt: now });
   return `📝 ${esc(label(level))} ${changed ? 'changed to' : 'marked'} ${{ TP: 'TP ✅', SL: 'SL ❌', BE: 'B/E ➖' }[outcome]}. It will be in the weekly recap.`;

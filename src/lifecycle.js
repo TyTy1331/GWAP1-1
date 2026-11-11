@@ -1,5 +1,9 @@
-import { config } from './config.js';
-import { addMarketBars, marketBarIndex, newsMute } from './filters.js';
+import { config, instrument } from './config.js';
+import { addMarketBars, marketBarIndex, newsMute, sessionAt, nextDailyClose } from './filters.js';
+
+// Silent levels are tracked for the journal but never alerted or counted: skipped setups (shadow)
+// and alerted ones that became invalid (you said so, near miss then TP, or tapped in no-trade hours).
+export const silent = (l) => Boolean(l.shadow || l.invalid);
 
 export function newLevel({ pair, tf, candle, dir, setup, internal, external, session, num }) {
   const close = candle.time + tf;
@@ -30,7 +34,7 @@ export function breakEvenSignals(state, pair, candle, dir, closeTime) {
     const inProfit = l.dir === 'bull' ? candle.close > l.level : candle.close < l.level;
     l.beSignal = { time: closeTime, at: candle.open, mode: inProfit ? 'stop' : 'tp' };
     l.managed = inProfit ? { stop: l.level, tp: l.setup.tp } : { stop: l.setup.stop, tp: l.level };
-    if (!l.shadow && !l.muted) events.push({ kind: 'be', id: `${l.id}:be`, level: l, time: closeTime });
+    if (!silent(l) && !l.muted) events.push({ kind: 'be', id: `${l.id}:be`, level: l, time: closeTime });
   }
   return events;
 }
@@ -46,46 +50,69 @@ function advanceManaged(l, c) {
   else if (tpHit) l.managedResult = m.tp === l.level ? 'BE' : 'TP';
 }
 
+const result = (l, outcome, t, extra = {}) => ({ id: l.id, pair: l.pair, tf: l.tf, dir: l.dir, outcome: l.muted ? 'muted' : outcome, formed: l.formedClose, tapped: l.tapTime, closed: t, ...extra, ...(silent(l) ? { shadow: true } : {}), ...(l.playType ? { play: l.playType } : {}) });
+
 function resolve(l, outcome, t, results) {
   l.status = outcome === 'won' ? 'won' : 'lost';
   l.resultTime = t;
   l.managedResult ??= outcome === 'won' ? 'TP' : 'SL';
-  results.push({ id: l.id, pair: l.pair, tf: l.tf, dir: l.dir, outcome: l.muted ? 'muted' : outcome, formed: l.formedClose, tapped: l.tapTime, closed: t, ...(l.shadow ? { shadow: true } : {}), ...(l.playType ? { play: l.playType } : {}) });
+  results.push(result(l, outcome, t));
   return l.muted ? [] : [{ kind: 'result', id: `${l.id}:result`, level: l, outcome, time: t }];
+}
+
+// Prop-firm rule: nothing is held over the daily close. The trade ends at the current price.
+function flatten(l, c, results) {
+  const r = (l.dir === 'bull' ? c.open - l.level : l.level - c.open) / Math.abs(l.level - l.setup.stop);
+  Object.assign(l, { status: 'closed', resultTime: c.time, closedR: Math.round(r * 10) / 10 });
+  l.managedResult ??= 'closed';
+  results.push(result(l, 'closed', c.time, { r: l.closedR }));
+  return l.muted ? [] : [{ kind: 'result', id: `${l.id}:result`, level: l, outcome: 'closed', time: c.time }];
 }
 
 // Replays one closed 1-minute candle against every live level of its pair. Returns alert events.
 export function advanceMinute(state, pair, c, newsEvents) {
-  const events = [];
+  const events = [], near = config.nearMissPips * instrument(pair).unit;
   for (const l of state.levels) {
     if (l.pair !== pair || c.time < l.formedClose) continue;
+    const out = [];
     if (l.status === 'active') {
       if (c.time >= l.deadline) { l.status = 'expired'; continue; }
-      if (!touches(l, c)) continue;
+      if (!touches(l, c)) {
+        // Came really close, never tapped, then ran to TP: the move went without the entry.
+        if (l.nearMiss && !l.invalid && hitTp(l, c)) {
+          if (!silent(l)) events.push({ kind: 'invalid', id: `${l.id}:invalid`, level: l, time: c.time });
+          Object.assign(l, { invalid: 'near miss, then ran to TP', invalidAt: c.time });
+        } else if (l.dir === 'bull' ? c.low <= l.level + near : c.high >= l.level - near) l.nearMiss = true;
+        continue;
+      }
       l.status = 'tracking';
       l.tapTime = c.time;
       l.tapIndex = marketBarIndex(l.windowStart, c.time, l.tf);
+      if (!l.invalid && !sessionAt(c.time)) Object.assign(l, { invalid: 'tapped in no-trade hours', invalidAt: c.time });
       l.muted = newsMute(newsEvents, pair, c.time);
-      if (!l.muted) events.push({ kind: 'tap', id: `${l.id}:tap`, level: l, time: c.time });
+      if (!l.muted) out.push({ kind: 'tap', id: `${l.id}:tap`, level: l, time: c.time });
       // In the tap minute only the stop counts: a wide minute can't fake a win.
-      if (hitStop(l, c)) events.push(...resolve(l, 'lost', c.time, state.results));
+      if (hitStop(l, c)) out.push(...resolve(l, 'lost', c.time, state.results));
     } else if (l.status === 'tracking') {
       advanceManaged(l, c);
-      if (hitStop(l, c)) events.push(...resolve(l, 'lost', c.time, state.results));
-      else if (hitTp(l, c)) events.push(...resolve(l, 'won', c.time, state.results));
+      l.flatAt ??= nextDailyClose(l.tapTime) - config.flatBeforeCloseMinutes * 60;
+      if (c.time >= l.flatAt) out.push(...flatten(l, c, state.results));
+      else if (hitStop(l, c)) out.push(...resolve(l, 'lost', c.time, state.results));
+      else if (hitTp(l, c)) out.push(...resolve(l, 'won', c.time, state.results));
     }
+    if (!silent(l)) events.push(...out); // silent setups are tracked, never alerted
   }
-  return events.filter((e) => !e.level.shadow); // skipped setups are tracked, never alerted
+  return events;
 }
 
 // Missing 1m history beyond normal closures: live levels can't be judged honestly.
 export function markDataGap(state, pair, from, to) {
   const hit = state.levels.filter((l) => l.pair === pair && (l.status === 'active' || l.status === 'tracking'));
   for (const l of hit) {
-    if (l.status === 'tracking') state.results.push({ id: l.id, pair, tf: l.tf, dir: l.dir, outcome: 'unknown', formed: l.formedClose, tapped: l.tapTime, closed: to, ...(l.shadow ? { shadow: true } : {}), ...(l.playType ? { play: l.playType } : {}) });
+    if (l.status === 'tracking') state.results.push({ ...result(l, 'unknown', to), outcome: 'unknown' });
     l.status = 'unknown';
   }
-  return [{ kind: 'gap', id: `${pair}:gap:${from}`, pair, from, to, count: hit.filter((l) => !l.shadow).length, time: to }];
+  return [{ kind: 'gap', id: `${pair}:gap:${from}`, pair, from, to, count: hit.filter((l) => !silent(l)).length, time: to }];
 }
 
 export function prune(state, now) {
