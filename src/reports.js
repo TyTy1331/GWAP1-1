@@ -39,7 +39,7 @@ function yourTrades(lines, label, reported) {
 }
 
 const statLine = (g) => `${g.key}: ${g.won}W / ${g.lost}L${g.rate !== null ? ` (${g.rate}%)` : ''}`
-  + `${g.closed ? ` · ${g.closed} closed at market close` : ''}${g.unknown ? ` · ${g.unknown} unknown` : ''}${g.muted ? ` · ${g.muted} muted by news` : ''}`;
+  + `${g.closed ? ` · ${g.closed} closed for the day` : ''}${g.unknown ? ` · ${g.unknown} unknown` : ''}${g.muted ? ` · ${g.muted} muted by news` : ''}`;
 
 // da: experimental DA plays, kept out of the main numbers: { alerts, reported, results }.
 export function recapText(results, alertCount, reported = [], da = null) {

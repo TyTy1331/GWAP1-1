@@ -1,5 +1,5 @@
 import { config, instrument } from './config.js';
-import { addMarketBars, marketBarIndex, newsMute, sessionAt, nextDailyClose } from './filters.js';
+import { addMarketBars, marketBarIndex, newsMute, sessionAt, flatTime } from './filters.js';
 
 // Silent levels are tracked for the journal but never alerted or counted: skipped setups (shadow)
 // and alerted ones that became invalid (you said so, near miss then TP, or tapped in no-trade hours).
@@ -60,7 +60,7 @@ function resolve(l, outcome, t, results) {
   return l.muted ? [] : [{ kind: 'result', id: `${l.id}:result`, level: l, outcome, time: t }];
 }
 
-// Prop-firm rule: nothing is held over the daily close. The trade ends at the current price.
+// Prop-firm rule: nothing is held into the next day. The trade ends at the current price.
 function flatten(l, c, results) {
   const r = (l.dir === 'bull' ? c.open - l.level : l.level - c.open) / Math.abs(l.level - l.setup.stop);
   Object.assign(l, { status: 'closed', resultTime: c.time, closedR: Math.round(r * 10) / 10 });
@@ -95,7 +95,7 @@ export function advanceMinute(state, pair, c, newsEvents) {
       if (hitStop(l, c)) out.push(...resolve(l, 'lost', c.time, state.results));
     } else if (l.status === 'tracking') {
       advanceManaged(l, c);
-      l.flatAt ??= nextDailyClose(l.tapTime) - config.flatBeforeCloseMinutes * 60;
+      l.flatAt ??= flatTime(l.tapTime);
       if (c.time >= l.flatAt) out.push(...flatten(l, c, state.results));
       else if (hitStop(l, c)) out.push(...resolve(l, 'lost', c.time, state.results));
       else if (hitTp(l, c)) out.push(...resolve(l, 'won', c.time, state.results));

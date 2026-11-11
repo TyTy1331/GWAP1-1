@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { sessionAt, marketOpen, latestMarketClose, addMarketBars, marketBarIndex, marketMinutesBetween,
+import { sessionAt, flatTime, marketOpen, latestMarketClose, addMarketBars, marketBarIndex, marketMinutesBetween,
   parseNews, newsMute, upcomingNews, refreshNews } from '../src/filters.js';
 import { utc } from './helpers/candles.js';
 
@@ -72,4 +72,10 @@ test('news feed failure keeps the cache and flags unavailable', async () => {
   assert.equal(r.events.length, 3);
   const fresh = await refreshNews(cache, 3600, bad);
   assert.equal(fresh, cache, 'not refreshed within 6 hours');
+});
+
+test('flat time: 23:55 SAST all year, or 5 min before Friday\'s market close if earlier', () => {
+  assert.equal(flatTime(utc('2026-11-04T19:20:00Z')), utc('2026-11-04T21:55:00Z')); // winter
+  assert.equal(flatTime(utc('2026-07-01T10:00:00Z')), utc('2026-07-01T21:55:00Z')); // summer: NY closes 23:00 SAST, day still ends at midnight
+  assert.equal(flatTime(utc('2026-07-03T10:00:00Z')), utc('2026-07-03T20:55:00Z')); // summer Friday: market shuts at 23:00 SAST
 });

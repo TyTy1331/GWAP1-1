@@ -22,7 +22,7 @@ export function journalRow(l) {
     l.dir === 'bull' ? 'BUY' : 'SELL', iso(l.candleOpen), fmtTime(l.candleOpen), l.level, s.stop, s.altStop, s.tp, s.riskPips,
     l.internal?.dir ?? '', l.internal?.count ?? '', l.external?.dir ?? '', l.external?.count ?? '', l.session,
     (s.warnings ?? []).join('; '), l.upgrades.map((tf) => TF_LABEL[tf]).join(';'), iso(l.tapTime), l.tapIndex ?? '',
-    l.status === 'closed' ? `closed at market close ${l.closedR}R` : RESULT[l.status] ?? l.status, l.muted ? 'yes' : '', iso(l.resultTime), l.reported ?? '', iso(l.reportedAt),
+    l.status === 'closed' ? `closed for the day ${l.closedR}R` : RESULT[l.status] ?? l.status, l.muted ? 'yes' : '', iso(l.resultTime), l.reported ?? '', iso(l.reportedAt),
     iso(l.beSignal?.time), l.beSignal ? (l.beSignal.mode === 'stop' ? 'stop to BE' : 'TP to BE') : '', l.managedResult ?? '',
     l.playType ?? 'normal', s.da?.below, s.da?.above, s.da?.rangePos, s.da ? (s.da.inDA ? 'yes' : 'no') : '', s.da?.tpBeyond, l.invalid ?? '',
   ].map(cell).join(',');

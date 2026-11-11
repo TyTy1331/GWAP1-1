@@ -95,16 +95,16 @@ test('near miss: within 2 pips without a tap, then TP → invalid alert, later t
   assert.equal(s.levels[0].status, 'tracking');
 });
 
-test('prop-firm rule: a running trade is closed 5 min before the daily 17:00 NY close', () => {
+test('prop-firm rule: a running trade is closed 5 min before midnight SAST', () => {
   const s = stateWithLevel(utc('2026-11-04T19:00:00Z')); // 21:00 SAST
   advanceMinute(s, PAIR, m(utc('2026-11-04T19:20:00Z'), 0.69995, 0.7002), []);
   assert.deepEqual(advanceMinute(s, PAIR, m(utc('2026-11-04T21:54:00Z'), 0.7003, 0.7005), []), []);
-  const ev = advanceMinute(s, PAIR, m(utc('2026-11-04T21:55:00Z'), 0.7003, 0.7008), []); // 16:55 NY
+  const ev = advanceMinute(s, PAIR, m(utc('2026-11-04T21:55:00Z'), 0.7003, 0.7008), []); // 23:55 SAST
   assert.equal(ev[0].outcome, 'closed');
   assert.equal(s.levels[0].status, 'closed');
   assert.equal(s.levels[0].closedR, 0.5);
   assert.deepEqual([s.results[0].outcome, s.results[0].r], ['closed', 0.5]);
-  assert.match(formatEvent(ev[0]), /closed before market close \(\+0\.5R\)/);
+  assert.match(formatEvent(ev[0]), /closed for the day \(\+0\.5R\)/);
 });
 
 test('Friday 1H level tapped Sunday after the open, within 9 market candles', () => {

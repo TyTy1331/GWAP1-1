@@ -27,7 +27,9 @@ export const config = {
   marketZone: 'America/New_York',
 
   tapWindowCandles: 9,
-  flatBeforeCloseMinutes: 5, // prop-firm rule: running trades are closed this long before the daily 17:00 NY close
+  // Prop-firm rule: nothing runs into the next day. Running trades end this long before dayEnd (or Friday's market close).
+  flatBeforeCloseMinutes: 5,
+  dayEnd: { zone: 'Africa/Johannesburg', time: '00:00' },
   nearMissPips: 2,           // came this close without tapping, then reached TP → the setup is invalid
   structureBars: 500,
   dojiBodyPct: 0.10,

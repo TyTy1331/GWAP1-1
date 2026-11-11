@@ -79,7 +79,7 @@ export function formatEvent(e, ctx = {}) {
     case 'tap':
       return `🎯 ${title(l)} · tapped\n${clock(e.time)} · candle ${l.tapIndex}/${config.tapWindowCandles}`;
     case 'result':
-      if (e.outcome === 'closed') return `⏹ ${title(l)} · closed before market close (${l.closedR > 0 ? '+' : ''}${l.closedR}R)\n${clock(e.time)}`;
+      if (e.outcome === 'closed') return `⏹ ${title(l)} · closed for the day (${l.closedR > 0 ? '+' : ''}${l.closedR}R)\n${clock(e.time)}`;
       return `${e.outcome === 'won' ? '✅' : '❌'} ${title(l)} · ${e.outcome === 'won' ? 'TP hit (+1R)' : 'stopped out (−1R)'}\n${clock(e.time)}`;
     case 'invalid':
       return `🚫 ${title(l)} · no longer valid\nCame within ${config.nearMissPips} pips of the no-wick without tapping, then reached TP · ${clock(e.time)}`;

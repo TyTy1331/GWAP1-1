@@ -32,10 +32,19 @@ export function marketOpen(t, zone = config.marketZone) {
   return true;
 }
 
-// Next daily close (17:00 New York) strictly after t.
-export function nextDailyClose(t, zone = config.marketZone) {
+// Next time the local clock in `zone` shows `minutes` past midnight, strictly after t.
+function nextTimeOfDay(t, zone, minutes) {
   const m = Math.floor(t / 60) * 60;
-  return m + (((17 * 60 - parts(m, zone).minutes + 1439) % 1440) + 1) * 60;
+  return m + (((minutes - parts(m, zone).minutes + 1439) % 1440) + 1) * 60;
+}
+
+// When a trade tapped at t must be flat: shortly before the day ends (config.dayEnd),
+// or before Friday's 17:00 New York market close if that comes first.
+export function flatTime(t) {
+  const day = nextTimeOfDay(t, config.dayEnd.zone, toMin(config.dayEnd.time));
+  const ny = nextTimeOfDay(t, config.marketZone, 17 * 60);
+  const weekEnd = parts(ny - 60, config.marketZone).weekday === 'Fri' ? ny : Infinity;
+  return Math.min(day, weekEnd) - config.flatBeforeCloseMinutes * 60;
 }
 
 // Most recent Friday-17:00-NY close at or before t (NY offsets are whole hours, so 15-minute steps hit it exactly).
