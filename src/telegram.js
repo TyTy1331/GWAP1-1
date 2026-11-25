@@ -21,7 +21,9 @@ const head = (l) => `${tag(l.num) ? `${tag(l.num)} ` : ''}${esc(name(l.pair))}${
 const side = (dir) => (dir === 'bull' ? 'BUY' : 'SELL');
 const dot = (dir) => (dir === 'bull' ? '🟢' : '🔴');
 const trend = (t) => (t.dir ? `${t.dir === 'bull' ? 'bullish' : 'bearish'} (${t.count} BOS)` : 'unclear');
-const title = (l) => `<b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}</b>`;
+// A+: the internal and external trend both point the trade's way (journal Nov 4–25: 65% vs 38% when against).
+export const aPlus = (l) => l.internal?.dir === l.dir && l.external?.dir === l.dir;
+const title = (l) => `<b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}${aPlus(l) ? ' ⭐ A+' : ''}</b>`;
 
 // Several voids would flood the alert, so they become one line: how many, their average level and full span.
 export function warnLines(warnings) {

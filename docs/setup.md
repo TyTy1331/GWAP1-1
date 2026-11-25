@@ -121,6 +121,7 @@ The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA, 15m), **GER40** (FOREX.com
 
 - **Hours:** **22:00–05:00 SAST is a no-trade zone.** No-wicks that form then, and taps that happen then, are not alerted; they are tracked quietly for the journal. The session name in an alert (Asia / London / New York) is only a label. Red-folder news still mutes ±30 minutes.
 - **Trend:** with the 4H, 1 BOS on the 15m is enough. A single 15m BOS against the 4H counts as a **pullback**, so trades with the 4H stay valid. The alert then says "aligned — 1 BOS against = pullback". Trading against the 4H still needs 2 BOS in a row.
+- **⭐ A+:** the alert title carries `⭐ A+` when the 15m and the 4H trend both point the trade's way (no pullback, not against the 4H). In the Nov 4–25 journal these won 65% (+0.29R a trade) vs 38% when against the 4H. The tag stays on the tap, result and break-even messages. GER40 and BTCUSD use their own timeframes (5m/1H, 30m/4H).
 
 ## How stops and warnings work
 

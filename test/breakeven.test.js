@@ -27,7 +27,7 @@ test('opposite no-wick while in profit: alert to move the stop to break-even', (
   const ev = breakEvenSignals(state, PAIR, bearNoWick(T0 + 1800, 0.7008, 0.7004), 'bear', T0 + 2700);
   assert.equal(ev.length, 1);
   assert.equal(l.beSignal.mode, 'stop');
-  assert.match(formatEvent(ev[0]), /#05 AUDUSD 15m BUY<\/b> · no-wick against you[\s\S]*move your stop to break-even \(0\.7\)/);
+  assert.match(formatEvent(ev[0]), /#05 AUDUSD 15m BUY ⭐ A\+<\/b> · no-wick against you[\s\S]*move your stop to break-even \(0\.7\)/);
   // price comes back to entry → managed result BE; later the plain 1:1 tracking is stopped out
   advanceMinute(state, PAIR, m(T0 + 2800, 0.6999, 0.7002), []);
   assert.equal(l.managedResult, 'BE');

@@ -12,9 +12,17 @@ const level = {
 
 test('formation message names the trade and its confluences, not entry/stop/TP', () => {
   const text = formatEvent({ kind: 'formed', level }, { upcoming: [{ country: 'GBP', title: 'GDP <prelim>', t: utc('2026-11-04T11:00:00Z') }], newsUnavailable: true });
-  for (const s of ['🟢 <b>GBPUSD 15m BUY</b>', 'Wed 10:00 candle', '15m: bullish (2 BOS)', '4H: bullish (1 BOS) ✅ aligned', 'London session', 'closes Wed 14:30', '⚠️ <b>Watch out</b>\n• Unfilled void',
+  for (const s of ['🟢 <b>GBPUSD 15m BUY ⭐ A+</b>', 'Wed 10:00 candle', '15m: bullish (2 BOS)', '4H: bullish (1 BOS) ✅ aligned', 'London session', 'closes Wed 14:30', '⚠️ <b>Watch out</b>\n• Unfilled void',
     'GDP &lt;prelim&gt;', 'News check unavailable']) assert.ok(text.includes(s), `missing: ${s}\n${text}`);
   for (const s of ['Entry', 'Stop', 'TP:', '1.3446', '1.3468']) assert.ok(!text.includes(s), `should not show: ${s}`);
+});
+
+test('A+ only when the 15m and 4H both point the trade direction; the tag follows the trade', () => {
+  const against = { ...level, external: { dir: 'bear', count: 2 } };
+  assert.ok(formatEvent({ kind: 'formed', level: against }).includes('<b>GBPUSD 15m BUY</b>'));
+  const pullback = { ...level, internal: { dir: 'bear', count: 1 } };
+  assert.ok(!formatEvent({ kind: 'formed', level: pullback }).includes('A+'));
+  assert.ok(formatEvent({ kind: 'tap', level: { ...level, tapIndex: 1 }, time: level.deadline }).includes('BUY ⭐ A+</b> · tapped'));
 });
 
 test('no warnings means no warning lines', () => {
