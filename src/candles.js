@@ -2,7 +2,7 @@ import { config } from './config.js';
 
 export class FeedError extends Error {}
 
-const TV_TF = { 60: '1', 900: '15', 1800: '30', 3600: '60', 14400: '240' };
+const TV_TF = { 60: '1', 300: '5', 900: '15', 1800: '30', 3600: '60', 14400: '240' };
 
 export function credentialsFromEnv(env = process.env, warn = () => {}) {
   const { TV_SESSION: session, TV_SIGNATURE: signature } = env;

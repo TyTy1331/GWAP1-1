@@ -10,14 +10,14 @@ export function newLevel({ pair, tf, candle, dir, setup, internal, external, ses
   return {
     id: `${pair}:${candle.time}:${dir}`, num,
     pair, tf, dir, candleOpen: candle.time, level: candle.open, formedClose: close,
-    windowStart: close, deadline: addMarketBars(close, config.tapWindowCandles, tf),
+    windowStart: close, deadline: addMarketBars(close, config.tapWindowCandles, tf, pair),
     setup, internal, external, session, status: 'active', upgrades: [],
   };
 }
 
 export function upgrade(level, tf, higher, setup) {
   const close = higher.time + tf;
-  Object.assign(level, { tf, setup, windowStart: close, deadline: addMarketBars(close, config.tapWindowCandles, tf) });
+  Object.assign(level, { tf, setup, windowStart: close, deadline: addMarketBars(close, config.tapWindowCandles, tf, level.pair) });
   level.upgrades.push(tf);
 }
 
@@ -87,7 +87,7 @@ export function advanceMinute(state, pair, c, newsEvents) {
       }
       l.status = 'tracking';
       l.tapTime = c.time;
-      l.tapIndex = marketBarIndex(l.windowStart, c.time, l.tf);
+      l.tapIndex = marketBarIndex(l.windowStart, c.time, l.tf, l.pair);
       if (!l.invalid && !sessionAt(c.time)) Object.assign(l, { invalid: 'tapped in no-trade hours', invalidAt: c.time });
       l.muted = newsMute(newsEvents, pair, c.time);
       if (!l.muted) out.push({ kind: 'tap', id: `${l.id}:tap`, level: l, time: c.time });
@@ -95,7 +95,7 @@ export function advanceMinute(state, pair, c, newsEvents) {
       if (hitStop(l, c)) out.push(...resolve(l, 'lost', c.time, state.results));
     } else if (l.status === 'tracking') {
       advanceManaged(l, c);
-      l.flatAt ??= flatTime(l.tapTime);
+      l.flatAt ??= flatTime(l.tapTime, l.pair);
       if (c.time >= l.flatAt) out.push(...flatten(l, c, state.results));
       else if (hitStop(l, c)) out.push(...resolve(l, 'lost', c.time, state.results));
       else if (hitTp(l, c)) out.push(...resolve(l, 'won', c.time, state.results));

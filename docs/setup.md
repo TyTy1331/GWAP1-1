@@ -104,7 +104,18 @@ DAs never block a normal alert. They add warnings: **entry inside a DA**, **sell
 
 ## Instruments
 
-The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA). For AUDJPY, 1 pip = 0.01. To add or remove a pair, edit `pairs` in `src/config.js`. Non-forex symbols, like indices, also need an entry in `instruments` (pip size, scale and news currency). FXCM symbols use the prefix `FX:` on TradingView.
+The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA, 15m), **GER40** (FOREX.com, `FOREXCOM:GER40`) and **BTCUSD** (`CRYPTO:BTCUSD`). To add or remove one, edit `pairs` in `src/config.js`. Non-forex symbols also need an entry in `instruments`. FXCM symbols use the prefix `FX:` on TradingView.
+
+| Symbol | No-wicks on | Upgrades to | Trend checked against | Size unit | News |
+|---|---|---|---|---|---|
+| AUDUSD, GBPUSD, AUDJPY | 15m | 30m, 1H | 4H | pips (AUDJPY 0.01) | both currencies |
+| GER40 | 5m | 15m, 30m | 1H | points, thresholds ×4 | EUR, USD |
+| BTCUSD | 30m | 1H | 4H | dollars, thresholds ×50 | USD |
+
+- **GER40** follows the same SAST hours as forex. FOREX.com closes it daily 23:05–00:00 Berlin time and from Friday 22:05 to Monday 00:00 Berlin time; those gaps don't trigger stale-data warnings.
+- **BTCUSD** trades 7 days a week, so it alerts on weekends too (same SAST hours and daily close). Weekend results appear in the following Friday's recap. cron-job.org must trigger runs on Saturday and Sunday for this.
+- Decision areas are off for GER40 and BTCUSD; they are tuned for forex on the 15m.
+- In the journal, `trend_15m`/`bos_15m` hold the symbol's own timeframe and `trend_4h`/`bos_4h` the timeframe it is checked against.
 
 ## Trading hours and trend rule
 

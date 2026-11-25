@@ -24,8 +24,10 @@ export function sessionAt(t, sessions = config.sessions) {
   return sessions.allowed.find((w) => inWindow(t, w))?.name ?? null;
 }
 
-export function marketOpen(t, zone = config.marketZone) {
-  const { weekday, minutes } = parts(t, zone);
+// Forex week (Sun 17:00 to Fri 17:00 New York); instruments marked `always` (crypto) never close.
+export function marketOpen(t, pair) {
+  if (pair && instrument(pair).always) return true;
+  const { weekday, minutes } = parts(t, config.marketZone);
   if (weekday === 'Sat') return false;
   if (weekday === 'Sun') return minutes >= 17 * 60;
   if (weekday === 'Fri') return minutes < 17 * 60;
@@ -39,11 +41,11 @@ function nextTimeOfDay(t, zone, minutes) {
 }
 
 // When a trade tapped at t must be flat: shortly before the day ends (config.dayEnd),
-// or before Friday's 17:00 New York market close if that comes first.
-export function flatTime(t) {
+// or before Friday's 17:00 New York market close if that comes first (not for 24/7 instruments).
+export function flatTime(t, pair) {
   const day = nextTimeOfDay(t, config.dayEnd.zone, toMin(config.dayEnd.time));
   const ny = nextTimeOfDay(t, config.marketZone, 17 * 60);
-  const weekEnd = parts(ny - 60, config.marketZone).weekday === 'Fri' ? ny : Infinity;
+  const weekEnd = !(pair && instrument(pair).always) && parts(ny - 60, config.marketZone).weekday === 'Fri' ? ny : Infinity;
   return Math.min(day, weekEnd) - config.flatBeforeCloseMinutes * 60;
 }
 
@@ -55,22 +57,22 @@ export function latestMarketClose(t) {
 }
 
 // Close time of the n-th market candle of size tf after `start` (a candle boundary).
-export function addMarketBars(start, n, tf) {
+export function addMarketBars(start, n, tf, pair) {
   let x = start, count = 0;
-  while (count < n) { if (marketOpen(x)) count++; x += tf; }
+  while (count < n) { if (marketOpen(x, pair)) count++; x += tf; }
   return x;
 }
 
 // 1-based index of the market candle (size tf, counted from `start`) containing time t.
-export function marketBarIndex(start, t, tf) {
+export function marketBarIndex(start, t, tf, pair) {
   let n = 0;
-  for (let x = start; x <= t; x += tf) if (marketOpen(x)) n++;
+  for (let x = start; x <= t; x += tf) if (marketOpen(x, pair)) n++;
   return n;
 }
 
-export function marketMinutesBetween(a, b) {
+export function marketMinutesBetween(a, b, pair) {
   let n = 0;
-  for (let x = a; x < b; x += 60) if (marketOpen(x)) n++;
+  for (let x = a; x < b; x += 60) if (marketOpen(x, pair)) n++;
   return n;
 }
 

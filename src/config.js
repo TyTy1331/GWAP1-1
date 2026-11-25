@@ -1,15 +1,31 @@
 // All tunable settings live here. Times are local market time in the given IANA zone.
-export const TF = { M1: 60, M15: 900, M30: 1800, H1: 3600, H4: 14400 };
-export const TF_LABEL = { 60: '1m', 900: '15m', 1800: '30m', 3600: '1H', 14400: '4H' };
+export const TF = { M1: 60, M5: 300, M15: 900, M30: 1800, H1: 3600, H4: 14400 };
+export const TF_LABEL = { 60: '1m', 300: '5m', 900: '15m', 1800: '30m', 3600: '1H', 14400: '4H' };
+// Key of each timeframe's candle list in the data passed to processPair.
+export const TF_KEY = { 60: 'm1', 300: 'm5', 900: 'm15', 1800: 'm30', 3600: 'h1', 14400: 'h4' };
 
 export const config = {
-  pairs: ['OANDA:AUDUSD', 'OANDA:GBPUSD', 'OANDA:AUDJPY'],
+  pairs: ['OANDA:AUDUSD', 'OANDA:GBPUSD', 'OANDA:AUDJPY', 'FOREXCOM:GER40', 'CRYPTO:BTCUSD'],
   pip: 0.0001,
   // Per-instrument overrides. pip: the unit risk is shown in. scale: multiplies every pip-based threshold
   // (stop buffer, voids, large stop, decision areas). Also: unit (label), currencies (news),
   // dailyBreak {zone,start,end} (no stale warning) and gapToleranceMinutes — for indices like FX:NAS100.
+  // Timeframes: tf (no-wicks and internal trend), ups (upgrades), ext (external trend). Default 15m / 30m,1H / 4H.
+  // always: trades 24/7 (no forex weekend). da: false turns decision areas off (they are tuned for forex on the 15m).
+  // scale comes from typical candle size: forex 15m ~5 pips, GER40 5m ~23 pts, BTCUSD 30m ~$250 (Nov 2026).
   instruments: {
     'OANDA:AUDJPY': { pip: 0.01 },
+    'FOREXCOM:GER40': {
+      pip: 1, scale: 4, unit: 'pts', currencies: ['EUR', 'USD'], da: false,
+      tf: TF.M5, ups: [TF.M15, TF.M30], ext: TF.H1,
+      // FOREX.com closes daily 23:05–00:00 Berlin and from Fri 22:05 to Mon 00:00 Berlin.
+      dailyBreak: { zone: 'Europe/Berlin', start: '22:00', end: '24:00' },
+      gapToleranceMinutes: 70,
+    },
+    'CRYPTO:BTCUSD': {
+      pip: 1, scale: 50, unit: 'USD', currencies: ['USD'], da: false, always: true,
+      tf: TF.M30, ups: [TF.H1], ext: TF.H4,
+    },
   },
   displayZone: 'Africa/Johannesburg',
 
@@ -83,5 +99,7 @@ export function instrument(pair) {
     currencies: i.currencies ?? (pair ? currencies(pair) : []),
     gapToleranceMinutes: i.gapToleranceMinutes ?? config.dataGapToleranceMinutes,
     dailyBreak: i.dailyBreak ?? null,
+    tf: i.tf ?? TF.M15, ups: i.ups ?? [TF.M30, TF.H1], ext: i.ext ?? TF.H4,
+    always: Boolean(i.always), da: i.da ?? true,
   };
 }

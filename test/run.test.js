@@ -7,6 +7,7 @@ import { processPair, runOnce } from '../src/run.js';
 import { freshState, saveState } from '../src/state.js';
 import { newLevel } from '../src/lifecycle.js';
 import { seq, zigzag, utc } from './helpers/candles.js';
+import { formatEvent } from '../src/telegram.js';
 
 const PAIR = 'OANDA:AUDUSD';
 const noNews = { ok: true, events: [] };
@@ -194,4 +195,34 @@ test('weekend: catches up to the Friday close, then sends the recap once', async
   logs.length = 0;
   await run();
   assert.ok(!logs.some((l) => l.includes('Weekly recap')));
+});
+
+// Same rising history on other timeframes: base `tf` and external `ext` candles, prices scaled to `k`.
+function trendOn(nwOpen, tf, ext, k) {
+  const rows = zigzag(UP).map((r) => r.map((x) => Math.round(x * k * 100) / 100));
+  const base = seq(nwOpen - rows.length * tf, tf, rows);
+  const o = Math.round(0.7032 * k * 100) / 100;
+  base.push({ time: nwOpen, open: o, high: o + 9 * k / 10000, low: o, close: o + 7 * k / 10000 });
+  return { base, ext: seq(nwOpen - rows.length * ext, ext, rows) };
+}
+
+test('GER40: no-wicks on the 5m, trend against the 1H', () => {
+  const pair = 'FOREXCOM:GER40', nw = utc('2026-11-04T09:00:00Z');
+  const { base, ext } = trendOn(nw, 300, 3600, 35000);
+  const state = freshState();
+  state.pairs[pair] = { last1m: nw + 300, last15: nw };
+  const { events } = processPair(state, pair, { m1: [], m5: base, m15: [], m30: [], h1: ext }, nw + 360, noNews);
+  assert.deepEqual(events.map((e) => e.kind), ['formed']);
+  assert.equal(state.levels[0].tf, 300);
+  assert.match(formatEvent(events[0], events[0].ctx), /GER40 5m BUY[\s\S]*5m: bullish[\s\S]*1H: bullish/);
+});
+
+test('BTCUSD: 30m no-wick against the 4H alerts on a Saturday', () => {
+  const pair = 'CRYPTO:BTCUSD', nw = utc('2026-11-07T09:00:00Z'); // Sat 11:00 SAST
+  const { base, ext } = trendOn(nw, 1800, 14400, 85000);
+  const state = freshState();
+  state.pairs[pair] = { last1m: nw + 1800, last15: nw };
+  const { events } = processPair(state, pair, { m1: [], m30: base, h1: [], h4: ext }, nw + 1860, noNews);
+  assert.deepEqual(events.map((e) => e.kind), ['formed']);
+  assert.match(formatEvent(events[0], events[0].ctx), /BTCUSD 30m BUY[\s\S]*30m: bullish[\s\S]*4H: bullish/);
 });

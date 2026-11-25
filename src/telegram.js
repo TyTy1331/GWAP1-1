@@ -1,4 +1,4 @@
-import { config, TF_LABEL } from './config.js';
+import { config, TF_LABEL, instrument } from './config.js';
 import { localParts } from './filters.js';
 
 export const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -62,7 +62,7 @@ export function formatEvent(e, ctx = {}) {
         [`${dot(l.dir)} ${title(l)}${da ? ' · DA PLAY (experimental)' : ''}`,
           `${l.dir === 'bull' ? 'Bullish' : 'Bearish'} no-wick · ${clock(l.candleOpen)} candle`,
           ...(da ? [`Held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : [])].join('\n'),
-        block('📊 <b>Trend</b>', [`15m: ${trend(l.internal)}`, `4H: ${trend(l.external)} ${bias}`]),
+        block('📊 <b>Trend</b>', [`${TF_LABEL[instrument(l.pair).tf]}: ${trend(l.internal)}`, `${TF_LABEL[instrument(l.pair).ext]}: ${trend(l.external)} ${bias}`]),
         `🕒 ${esc(l.session)} session · tap window closes ${clock(l.deadline)}`,
         cautions(l),
         notes(l),

@@ -79,3 +79,11 @@ test('flat time follows the market close: 23:55 SAST in winter, 22:55 SAST in th
   assert.equal(flatTime(utc('2026-07-01T10:00:00Z')), utc('2026-07-01T20:55:00Z')); // summer: the market day ends 23:00 SAST
   assert.equal(flatTime(utc('2026-07-03T10:00:00Z')), utc('2026-07-03T20:55:00Z')); // summer Friday: the week ends 23:00 SAST
 });
+
+test('24/7 instruments (BTCUSD) ignore the forex weekend', () => {
+  const BTC = 'CRYPTO:BTCUSD', sat = utc('2026-11-07T12:00:00Z');
+  assert.equal(marketOpen(sat, BTC), true);
+  assert.equal(marketOpen(sat, 'OANDA:AUDUSD'), false);
+  assert.equal(marketMinutesBetween(utc('2026-11-06T21:50:00Z'), utc('2026-11-08T22:10:00Z'), BTC), 2 * 1440 + 20);
+  assert.equal(addMarketBars(utc('2026-11-06T22:00:00Z'), 9, 1800, BTC), utc('2026-11-07T02:30:00Z')); // straight through Friday night
+});

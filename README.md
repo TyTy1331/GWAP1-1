@@ -1,9 +1,9 @@
 # No-wick alert bot
 
-Telegram alerts for BardFX's no-wick 1:1 entry model on OANDA AUDUSD, GBPUSD and AUDJPY, run every 5 minutes by GitHub Actions for $0. Alerts only — it never places trades.
+Telegram alerts for BardFX's no-wick 1:1 entry model on OANDA AUDUSD, GBPUSD and AUDJPY (15m), FOREX.com GER40 (5m) and BTCUSD (30m, 7 days a week), run every 5 minutes by GitHub Actions for $0. Alerts only — it never places trades.
 
-- Detects bullish (open = low) and bearish (open = high) no-wick candles on the 15m, upgrading to 30m/1H when they line up
-- Checks the 15m body-close structure (BOS) and 4H alignment, sessions and red-folder news
+- Detects bullish (open = low) and bearish (open = high) no-wick candles on each symbol's timeframe, upgrading to higher timeframes when they line up
+- Checks body-close structure (BOS) against a higher timeframe (forex 15m vs 4H, GER40 5m vs 1H, BTCUSD 30m vs 4H), sessions and red-folder news
 - Sends formation, tap (within 9 candles), TP/SL result, daily check-in and weekly recap messages
 - Keeps a permanent monthly trade journal (CSV) of every no-wick, alerted or skipped, on the `bot-state` branch
 

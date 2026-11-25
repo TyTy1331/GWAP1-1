@@ -1,5 +1,5 @@
 import { pathToFileURL } from 'node:url';
-import { config, TF, instrument } from './config.js';
+import { config, TF, TF_KEY, TF_LABEL, instrument } from './config.js';
 import { fetchCandles, credentialsFromEnv, isFresh, FeedError } from './candles.js';
 import { noWickDir, upgradesLevel } from './nowick.js';
 import { analyze, trendAt, isValid } from './structure.js';
@@ -26,12 +26,14 @@ function warnOnce(state, key, now, text) {
 
 // Replays one pair's candles in time order: every 1m candle up to a higher-timeframe close
 // is processed before that close, so detection and upgrades always see earlier taps.
+// Timeframes come from the instrument: no-wicks on inst.tf (15m for forex), upgrades to inst.ups,
+// external trend on inst.ext. `ps.last15` is the last processed close of inst.tf.
 export function processPair(state, pair, data, until, news) {
   const ps = state.pairs[pair], inst = instrument(pair);
   const events = [], skipped = [];
-  const { m1, m15, m30, h1, h4 } = data;
+  const m1 = data.m1, base = data[TF_KEY[inst.tf]], ext = data[TF_KEY[inst.ext]];
 
-  if (m1.length && m1[0].time > ps.last1m && marketMinutesBetween(ps.last1m, m1[0].time) > inst.gapToleranceMinutes) {
+  if (m1.length && m1[0].time > ps.last1m && marketMinutesBetween(ps.last1m, m1[0].time, pair) > inst.gapToleranceMinutes) {
     events.push(...markDataGap(state, pair, ps.last1m, m1[0].time));
   }
 
@@ -41,14 +43,19 @@ export function processPair(state, pair, data, until, news) {
     if (!list) return;
     list.forEach((c, i) => { const t = c.time + tf; if (t > ps.last15 && t <= until) items.push({ t, prio, tf, c, i, list }); });
   };
-  addCloses(m15, TF.M15, 1); addCloses(m30, TF.M30, 2); addCloses(h1, TF.H1, 3);
+  addCloses(base, inst.tf, 1);
+  inst.ups.forEach((tf, k) => addCloses(data[TF_KEY[tf]], tf, 2 + k));
   items.sort((a, b) => a.t - b.t || a.prio - b.prio);
 
-  const a15 = m15 && analyze(m15, TF.M15), a4 = h4 && analyze(h4, TF.H4);
-  const aHigher = { [TF.M30]: m30 && analyze(m30, TF.M30), [TF.H1]: h1 && analyze(h1, TF.H1) };
+  const aBase = base && analyze(base, inst.tf), aExt = ext && analyze(ext, inst.ext);
+  const aHigher = Object.fromEntries(inst.ups.map((tf) => [tf, data[TF_KEY[tf]] && analyze(data[TF_KEY[tf]], tf)]));
   const upToHere = (list, i) => list.slice(Math.max(0, i - config.structureBars + 1), i + 1);
   const daCache = new Map();
-  const dasAt = (t) => { if (!daCache.has(t)) daCache.set(t, findDAs(m15, m30, t, inst.unit)); return daCache.get(t); };
+  const dasAt = (t) => {
+    if (!inst.da) return [];
+    if (!daCache.has(t)) daCache.set(t, findDAs(base, data.m30, t, inst.unit));
+    return daCache.get(t);
+  };
 
   for (const it of items) {
     if (it.prio === 0) {
@@ -56,16 +63,16 @@ export function processPair(state, pair, data, until, news) {
       ps.last1m = it.t;
       continue;
     }
-    if (it.tf === TF.M15) {
+    if (it.tf === inst.tf) {
       ps.last15 = it.t;
       const dir = noWickDir(it.c);
       if (!dir) continue;
       events.push(...breakEvenSignals(state, pair, it.c, dir, it.t));
       const session = sessionAt(it.t), muted = newsMute(news.events, pair, it.t);
-      const internal = trendAt(a15.bos, it.t), external = trendAt(a4.bos, it.t);
-      const candles = upToHere(m15, it.i), das = dasAt(it.t);
+      const internal = trendAt(aBase.bos, it.t), external = trendAt(aExt.bos, it.t);
+      const candles = upToHere(base, it.i), das = dasAt(it.t);
       const build = (stopAt) => {
-        const s = buildSetup({ dir, candles, swings: a15.swings, tf: TF.M15, recentLevels: recentNoWicks(candles), stopAt, inst });
+        const s = buildSetup({ dir, candles, swings: aBase.swings, tf: inst.tf, recentLevels: recentNoWicks(candles), stopAt, inst });
         return s && applyDA(s, dir, das);
       };
       let setup = build();
@@ -76,10 +83,10 @@ export function processPair(state, pair, data, until, news) {
       const reason = !session ? 'outside session'
         : muted ? 'red-folder news'
         : zone ? (config.da.alertPlays ? null : 'DA play (alerts off)')
-        : trendOnly ? `trend (15m ${internal.dir ?? '?'}×${internal.count}, 4H ${external.dir ?? '?'})`
+        : trendOnly ? `trend (${TF_LABEL[inst.tf]} ${internal.dir ?? '?'}×${internal.count}, ${TF_LABEL[inst.ext]} ${external.dir ?? '?'})`
         : !setup ? 'no opposite swing for a stop' : null;
       // Skipped no-wicks are still tracked silently (no alerts) so the journal shows how they would have done.
-      const level = newLevel({ pair, tf: TF.M15, candle: it.c, dir, setup, internal, external, session: session ?? 'none', num: reason ? undefined : nextNum(state) });
+      const level = newLevel({ pair, tf: inst.tf, candle: it.c, dir, setup, internal, external, session: session ?? 'none', num: reason ? undefined : nextNum(state) });
       if (zone) Object.assign(level, { playType: 'da', daZone: zone });
       state.levels.push(level);
       if (reason) {
@@ -128,28 +135,29 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
     for (const pair of config.pairs) {
       if (!state.pairs[pair]) {
         // Fresh start: begin at "now" so old candles never trigger alerts.
-        state.pairs[pair] = { last1m: floorTo(now, 60), last15: floorTo(now, TF.M15) };
+        state.pairs[pair] = { last1m: floorTo(now, 60), last15: floorTo(now, instrument(pair).tf) };
         continue;
       }
-      const ps = state.pairs[pair];
-      if (ps.last1m >= until) continue;
+      const ps = state.pairs[pair], inst = instrument(pair);
+      const pOpen = open || inst.always, pUntil = inst.always ? now : until; // crypto trades through the forex weekend
+      if (ps.last1m >= pUntil) continue;
       // One failed run is harmless (the next run replays what it missed), so only a long stall is reported.
-      const stuck = () => marketMinutesBetween(ps.last1m, now) > config.quietFailMinutes;
+      const stuck = () => marketMinutesBetween(ps.last1m, now, pair) > config.quietFailMinutes;
       try {
         const get = (tf, count) => fetchCandles({ pair, tf, count, now, credentials, getCandles });
         const m1 = await get(TF.M1, 500);
-        if (open && !isFresh(m1, now)) {
-          const brk = instrument(pair).dailyBreak; // e.g. an index's daily close: no candles is normal
+        if (pOpen && !isFresh(m1, now)) {
+          const brk = inst.dailyBreak; // e.g. an index's daily close: no candles is normal
           if (stuck() && !(brk && inWindow(now, brk))) warnOnce(state, `stale:${pair}`, now, `TradingView data for ${pair} has been stale for ${config.quietFailMinutes}+ min; alerts paused for this pair.`);
           else log(`${pair}: data stale, will retry next run`);
           continue;
         }
         latestData = Math.max(latestData ?? 0, m1.at(-1).time + 60);
         const data = { m1 };
-        if (floorTo(until, TF.M15) > ps.last15) {
-          Object.assign(data, { m15: await get(TF.M15, 500), m30: await get(TF.M30, 500), h1: await get(TF.H1, 500), h4: await get(TF.H4, 500) });
+        if (floorTo(pUntil, inst.tf) > ps.last15) {
+          for (const tf of new Set([inst.tf, ...inst.ups, inst.ext, ...(inst.da ? [TF.M30] : [])])) data[TF_KEY[tf]] = await get(tf, 500);
         }
-        const { events, skipped } = processPair(state, pair, data, until, state.news);
+        const { events, skipped } = processPair(state, pair, data, pUntil, state.news);
         for (const e of events) enqueue(state, e.id, formatEvent(e, e.ctx));
         log(`${pair}: ${events.length} event(s), ${skipped.length} no-wick(s) skipped`);
       } catch (e) {
