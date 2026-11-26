@@ -4,6 +4,9 @@ import { volumeProfile, valleys, validate, spaced, applyDA, daPlayZone, prevDayO
 import { processPair } from '../src/run.js';
 import { freshState } from '../src/state.js';
 import { formatEvent } from '../src/telegram.js';
+import { config } from '../src/config.js';
+
+config.stopBufferPips = 1; // stop prices below were written for 1 pip of breathing room
 import { journalRow } from '../src/journal.js';
 import { recapText } from '../src/reports.js';
 import { seq, zigzag, utc } from './helpers/candles.js';

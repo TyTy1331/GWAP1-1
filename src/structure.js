@@ -1,8 +1,11 @@
 import { config } from './config.js';
 
 export const isDoji = (c, pct = config.dojiBodyPct) => {
-  const range = c.high - c.low;
-  return range === 0 || Math.abs(c.close - c.open) < pct * range;
+  const range = c.high - c.low, body = Math.abs(c.close - c.open);
+  if (range === 0) return true;
+  // Bard: a doji is a candle whose top and bottom wicks are both bigger than its body.
+  if (config.dojiRule === 'wicks') return c.high - Math.max(c.open, c.close) > body && Math.min(c.open, c.close) - c.low > body;
+  return body < pct * range;
 };
 const bodyTop = (c) => Math.max(c.open, c.close);
 const bodyBot = (c) => Math.min(c.open, c.close);
@@ -59,9 +62,12 @@ export function analyze(candles, tf) {
 }
 
 // Aligned with the 4H: one BOS is enough. Against (or unknown) 4H: two consecutive BOS.
-export function isValid(dir, internal, external) {
-  // A single 15m BOS against the 4H is only a pullback, so trades with the 4H stay valid.
-  if (external.dir === dir && internal.dir && internal.dir !== dir && internal.count === 1) return true;
+// pullback: also allow a trade with the 4H while the 15m has a single BOS against (not Bard's rule; GER40 only).
+export function isValid(dir, internal, external, pullback = false) {
+  if (pullback && isPullback(dir, internal, external)) return true;
   if (internal.dir !== dir) return false;
   return external.dir === dir ? internal.count >= 1 : internal.count >= 2;
 }
+
+// With the external trend, but the internal has exactly one BOS against.
+export const isPullback = (dir, internal, external) => external.dir === dir && Boolean(internal.dir) && internal.dir !== dir && internal.count === 1;

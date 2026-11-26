@@ -71,6 +71,9 @@ If the run fails with a TradingView error, GitHub's servers may be blocked from 
 |---|---|
 | 🟢 BUY / 🔴 SELL | A valid no-wick formed: trade number, pair, trend, session and tap deadline. Entry, stop and TP are left to you. ⭐ A+ = fully aligned; 🔄 CHoCH = GER40 change-of-character setup |
 | 🧪 DA PLAY (experimental) | A counter-trend no-wick right after price held a **decision area** (see below). Only 1 BOS on the 15m against the 4H. Stop sits just beyond the DA. Tracked separately from normal setups |
+| 🌀 IMBALANCE PLAY | Bard's imbalance rule: only 1 BOS against the 4H, but an unfilled imbalance sits right in front of the trade with no swing in the way. TP is the imbalance's far edge (at least 1:1, capped at 2R), shown in the alert. Counted with normal trades; journal `play_type = imbalance` |
+| 📍 Pre-entry | The no-wick sits in the first half of its leg (near the pivot), where Bard enters early because price rarely comes all the way back. The line gives the 50% level of the leg |
+| ⚠️ (on an alert) | An untapped 1H no-wick against the trade that the 1H trend backs (it can play out first: Bard lost a trade to this), or a non-A+ setup at the New York open (09:15–10:00 New York time), which Bard skips |
 | ℹ️ | Good news on a setup, e.g. a decision area sits between entry and stop and protects it |
 | 🔼 upgraded | The 30m or 1H candle is also a no-wick. Tap window recalculated on that timeframe |
 | 🎯 tapped | Price touched the level inside its 9-candle window ("2/9" = 2nd candle) |
@@ -80,7 +83,7 @@ If the run fails with a TradingView error, GitHub's servers may be blocked from 
 | 🛡️ | A no-wick formed against your open trade. In profit: move the stop to break-even. In drawdown: move TP to break-even (Bard's rule) |
 | ⚠️ | Something needs your eye: data stuck for 30+ min, Telegram replies failing 3 runs in a row, news calendar down, a data gap, a failed run. Single hiccups are retried quietly |
 | 👋 | Morning briefing at 05:00 SAST on market days: a trading tip or quote, a 📒 line from your last 2 weeks of alerts when one stands out (e.g. a weak session), each pair's 1H and 4H trend with the day's bias (🟢 favour buys, 🔴 favour sells, 🟡 mixed: trade with the pair's alert trend, which is the 4H, or the 1H for GER40), a 💱 currency theme when the forex pairs agree on one currency (e.g. USD strong in AUDUSD and GBPUSD: trades on those pairs are one bet), a 🏖 warning on bank holidays, and today's high-impact news. **If it stops arriving, the bot has stopped** |
-| 📊 | Weekly recap after Friday's close, ending with 🧪 **Rule tests**: the last 30 days of alerts under other rules, in R, on the same trades: TP at 1:1.5, a stop 1 pip wider, following the BE rule, only A+ alerts, and no pullback rule. ⬆️ = better than now. The 1:1.5 and wider-stop results are also in the journal (`test_tp15_r`, `test_wider_stop_r`). Nothing changes until you decide |
+| 📊 | Weekly recap after Friday's close, ending with 🧪 **Rule tests**: the last 30 days of alerts under other rules, in R, on the same trades: stops with 1, 2 or 3 pips of breathing room, Bard's previous-candle stop, TP at 1:1.5, following the BE rule and only A+ alerts. It also shows what the skipped pullbacks would have made. ⬆️ = better than now. The stop and 1:1.5 results are also in the journal (`test_*` columns). Nothing changes until you decide |
 
 Some runs in the Actions tab show as "cancelled". That's normal: GitHub drops a waiting run when a newer one is queued, and the next run catches up.
 
@@ -104,11 +107,11 @@ DAs never block a normal alert. They add warnings (recorded in the journal, not 
 
 ## Instruments
 
-The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA, 15m), **GER40** (FOREX.com, `FOREXCOM:GER40`) and **BTCUSD** (`CRYPTO:BTCUSD`). To add or remove one, edit `pairs` in `src/config.js`. Non-forex symbols also need an entry in `instruments`. FXCM symbols use the prefix `FX:` on TradingView.
+The bot watches **AUDUSD, GBPUSD, AUDJPY, AUDCAD and USDCAD** (OANDA, 15m; AUDCAD and USDCAD added Nov 26, 2026, both pairs Bard trades), **GER40** (FOREX.com, `FOREXCOM:GER40`) and **BTCUSD** (`CRYPTO:BTCUSD`). To add or remove one, edit `pairs` in `src/config.js`. Non-forex symbols also need an entry in `instruments`. FXCM symbols use the prefix `FX:` on TradingView.
 
 | Symbol | No-wicks on | Upgrades to | Trend checked against | Size unit | News |
 |---|---|---|---|---|---|
-| AUDUSD, GBPUSD, AUDJPY | 15m | 30m, 1H | 4H | pips (AUDJPY 0.01) | both currencies |
+| AUDUSD, GBPUSD, AUDJPY, AUDCAD, USDCAD | 15m | 30m, 1H | 4H | pips (AUDJPY 0.01) | both currencies |
 | GER40 | 5m | 15m, 30m | 1H | points, thresholds ×4 | EUR, USD |
 | BTCUSD | 30m | 1H | 4H | dollars, thresholds ×50 | USD |
 
@@ -120,13 +123,13 @@ The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA, 15m), **GER40** (FOREX.com
 
 ## Trading hours and trend rule
 
-- **Hours:** **22:00–05:00 SAST is a no-trade zone.** No-wicks that form then, and taps that happen then, are not alerted; they are tracked quietly for the journal. The session name in an alert (Asia / London / New York) is only a label. Red-folder news still mutes ±30 minutes.
-- **Trend:** with the 4H, 1 BOS on the 15m is enough. A single 15m BOS against the 4H counts as a **pullback**, so trades with the 4H stay valid. The alert then says "aligned — 1 BOS against = pullback". Trading against the 4H still needs 2 BOS in a row.
+- **Hours:** **22:00–05:00 SAST is a no-trade zone.** No-wicks that form then, and taps that happen then, are not alerted; they are tracked quietly for the journal. The session name in an alert (Asia / London / New York) is only a label. Red-folder news mutes from 1 hour before to 1 hour after (Bard's rule; it was ±30 minutes until Nov 26, 2026).
+- **Trend:** with the 4H, 1 BOS on the 15m in the trade's direction is enough. Trading against the 4H needs 2 BOS in a row. Since Nov 26, 2026 **pullbacks** (with the 4H while the 15m has 1 BOS against) are not alerted, because Bard needs both trends to agree. They are still tracked silently, and the weekly rule tests show how they would have done. **GER40 keeps pullbacks** (alerts say "aligned (pullback: 1 BOS against)") as well as its 🔄 CHoCH setups.
 - **⭐ A+:** the alert title carries `⭐ A+` when the 15m and the 4H trend both point the trade's way (no pullback, not against the 4H). In the Nov 4–25 journal these won 65% (+0.29R a trade) vs 38% when against the 4H. The tag stays on the tap, result and break-even messages. GER40 and BTCUSD use their own timeframes (5m/1H, 30m/4H).
 
 ## How stops and warnings work
 
-- **Stop:** 1 pip beyond the latest swing high (sells) or swing low (buys), so the risk changes with the structure.
+- **Stop:** 2.5 pips of breathing room beyond the latest swing high (sells) or swing low (buys), so the risk changes with the structure. Bard uses 2–3 pips; it was 1 pip until Nov 26, 2026. The weekly rule tests compare 1, 2 and 3 pips and his previous-candle stop.
 - **Deeper pullback:** if an earlier no-wick in the same direction is still untapped, still inside its 9-candle window, and sits inside that stop, price will probably go there first. The stop then moves beyond the swing that protected that earlier no-wick, and the alert says so.
 - **Warnings never block an alert, and since 2026-11-26 they are no longer shown in alerts.** They are recorded silently in the journal's `warnings` column:
   - unfilled voids against the trade (a slow push of 5+ candles, or a fast one of 3+ candles covering 10+ pips)
@@ -157,7 +160,7 @@ Swipe-reply to any alert for the trade with `invalid` (or send `#05 invalid`). T
 
 Every 15m no-wick the bot sees is written to a monthly spreadsheet on the `bot-state` branch: `journal/2026-11.csv`, `journal/2026-12.csv`, and so on. That includes the ones it **skipped**, with the reason. Skipped ones are tracked silently (no alerts), so you can later see how they would have done. Journal files are never deleted.
 
-Each row has: number, whether it was alerted or skipped (and why), pair, timeframe, BUY/SELL, formation time (UTC and SAST), level, stop, alternative stop, TP, risk, 15m and 4H trend with BOS counts, session, warnings, upgrades, tap time and n/9, the bot's result (TP, SL, expired, unknown, no setup, plus whether news muted it), and your reported TP/SL/BE. Decision-area columns: `play_type` (normal / da / choch), the nearest DA below and above, `range_pos` (where entry sits between them, 0–100%), `in_da` and `tp_beyond_da`.
+Each row has: number, whether it was alerted or skipped (and why), pair, timeframe, BUY/SELL, formation time (UTC and SAST), level, stop, alternative stop, TP, risk, 15m and 4H trend with BOS counts, session, warnings, upgrades, tap time and n/9, the bot's result (TP, SL, expired, unknown, no setup, plus whether news muted it), and your reported TP/SL/BE. `pre_entry_leg_pos` (0 = no-wick at the start of its leg), `htf_nowick_against`, `ny_open` and the `test_*` rule-test results in R. Decision-area columns: `play_type` (normal / da / choch / imbalance), the nearest DA below and above, `range_pos` (where entry sits between them, 0–100%), `in_da` and `tp_beyond_da`.
 
 A row appears once the setup finishes (TP, SL or expired) or when you report it.
 
@@ -191,6 +194,8 @@ node scripts/calibrate.js AUDUSD 2
 ```
 
 This prints, in SAST, every 15m no-wick from the last 2 days, whether the bot would have alerted and why not, plus every BOS it saw on the 15m and 4H. Compare against your chart with X Ghost Wickless Candles. Note any disagreements. Thresholds such as the doji size, stop buffer and void length live in `src/config.js`.
+
+To compare the bot's doji rule (body under 10% of the range) with Bard's (both wicks bigger than the body) on the last 2–3 months, run `node scripts/doji-test.js`. On Nov 26, 2026 they came out nearly identical (580 vs 575 trades, +32R vs +33R). Switch with `dojiRule` in `src/config.js`.
 
 ## Changing settings
 

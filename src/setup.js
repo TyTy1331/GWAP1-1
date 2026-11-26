@@ -86,7 +86,58 @@ export function buildSetup({ dir, candles, swings, tf, recentLevels = [], stopAt
   if (blocker) warnings.push(`TP is beyond a swing ${isLong ? 'high' : 'low'} at ${blocker.wick} — consider pulling TP in`);
   if (Math.abs(entry - stop) > config.largeStopPips * inst.unit + 1e-9) warnings.push(`Large stop: ${riskPips} ${inst.name}`);
 
-  return { entry, stop, altStop, tp, riskPips, warnings };
+  // structure: the swing the stop sits beyond, so the rule tests can try other buffers.
+  return { entry, stop, altStop, tp, riskPips, warnings, structure: opposite.wick };
+}
+
+// Bard's imbalance play: an unfilled push in the opposite colour right in front of the trade (no swing in
+// between) lets a counter-trend trade go after 1 BOS; TP at the far edge of the imbalance.
+// Returns the nearest such zone { from, to } or null.
+export function imbalanceAhead({ dir, candles, swings, tf, inst = DEFAULT }) {
+  const nw = candles.at(-1), entry = nw.open, isLong = dir === 'bull';
+  const zones = voidsAgainst(isLong ? 'bear' : 'bull', candles.slice(0, -1), entry, inst.unit)
+    .filter((v) => (isLong ? v.from > entry : v.to < entry))
+    .sort((a, b) => (isLong ? a.from - b.from : b.to - a.to));
+  const z = zones[0];
+  if (!z) return null;
+  // "If there's structure in between, no": no swing between the entry and the imbalance's far edge (the target).
+  const far = isLong ? z.to : z.from;
+  const between = swings.some((s) => s.type === (isLong ? 'high' : 'low') && s.confirmedAt <= nw.time + tf
+    && (isLong ? s.level > entry && s.level < far : s.level < entry && s.level > far));
+  return between ? null : z;
+}
+
+// Where the no-wick sits in its leg: 0 = at the start (the pivot), 1 = at the far end. The leg runs from the
+// pullback's extreme body since the last opposite swing to the furthest body after it.
+// Bard pre-enters below 0.5; price is the 50% level he would enter at instead.
+export function legPosition({ dir, candles, swings, tf }) {
+  const nw = candles.at(-1), isLong = dir === 'bull';
+  const last = swings.filter((s) => s.type === (isLong ? 'high' : 'low') && s.time < nw.time && s.confirmedAt <= nw.time + tf)
+    .sort((a, b) => b.time - a.time)[0];
+  const leg = candles.filter((c) => c.time > (last?.time ?? -Infinity)).slice(-config.voidLookback);
+  const lo = (c) => Math.min(c.open, c.close), hi = (c) => Math.max(c.open, c.close);
+  let k = 0;
+  leg.forEach((c, i) => { if (isLong ? lo(c) < lo(leg[k]) : hi(c) > hi(leg[k])) k = i; });
+  const start = isLong ? lo(leg[k]) : hi(leg[k]);
+  const end = isLong ? Math.max(...leg.slice(k).map(hi)) : Math.min(...leg.slice(k).map(lo));
+  if (end === start) return null;
+  return { pos: Math.round(((nw.open - start) / (end - start)) * 100) / 100, price: round5((start + end) / 2) };
+}
+
+// Bard's lost trade (Nov 2026): a 15m setup against an untapped higher-timeframe no-wick that the higher
+// timeframe's trend supports; "the one hour played out instead". higher: that timeframe's candles,
+// base: the setup timeframe's candles, both up to the formation time t.
+export function higherAgainst({ dir, higher, higherTf, trend, base, baseTf, t }) {
+  const opp = dir === 'bull' ? 'bear' : 'bull';
+  if (!higher?.length || trend?.dir !== opp) return null;
+  const closed = higher.filter((c) => c.time + higherTf <= t).slice(-config.tapWindowCandles).reverse();
+  for (const c of closed) {
+    if (noWickDir(c) !== opp) continue;
+    const after = base.filter((b) => b.time >= c.time + higherTf && b.time + baseTf <= t);
+    const tapped = opp === 'bull' ? after.some((b) => b.low <= c.open) : after.some((b) => b.high >= c.open);
+    if (!tapped) return { time: c.time, level: c.open, dir: opp };
+  }
+  return null;
 }
 
 // Untapped no-wick levels (either direction) among the last N candles before the no-wick; age in candles.

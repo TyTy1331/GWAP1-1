@@ -39,16 +39,27 @@ export function formatEvent(e, ctx = {}) {
       const da = l.playType === 'da', inst = instrument(l.pair);
       const bias = l.external.dir === l.dir
         ? (l.internal.dir === l.dir ? '✅ aligned' : '✅ aligned (pullback: 1 BOS against)')
-        : da ? '↩️ against (DA play, 1 BOS)' : l.choch ? '↩️ against (change of character, 1 BOS)' : '↩️ against (2 BOS rule met)';
+        : da ? '↩️ against (DA play, 1 BOS)' : l.imb ? '↩️ against (imbalance play, 1 BOS)'
+          : l.choch ? '↩️ against (change of character, 1 BOS)' : '↩️ against (2 BOS rule met)';
+      const side = l.dir === 'bull' ? 'bullish' : 'bearish', against = l.htfAgainst;
+      const rr = l.imb ? Math.round((Math.abs(l.setup.tp - l.level) / Math.abs(l.level - l.setup.stop)) * 10) / 10 : null;
+      // Bard's checks: pre-entry when the no-wick is low in its leg, a higher-timeframe no-wick against, NY open.
+      const checks = [
+        ...(l.leg && l.leg.pos < 0.5 ? [`📍 Pre-entry: the no-wick sits near the start of its leg (${Math.round(l.leg.pos * 100)}%). Bard enters early here, around ${l.leg.price} (50% of the leg)`] : []),
+        ...(against ? [`⚠️ Untapped ${TF_LABEL[against.tf]} ${against.dir === 'bull' ? 'bullish' : 'bearish'} no-wick against this trade (${clock(against.time)} candle, at ${against.level}): it can play out first`] : []),
+        ...(l.nyOpen && !aPlus(l) ? ['⚠️ New York open: Bard only takes A+ setups here'] : []),
+      ];
       const news = [
         ...(ctx.upcoming ?? []).map((n) => `• ${esc(n.country)} ${esc(n.title)} at ${clock(n.t)}`),
         ...(ctx.newsUnavailable ? ['• News check unavailable — check the calendar yourself'] : []),
       ];
       return blocks(
-        [`${dot(l.dir)} ${title(l)}${da ? ' · DA PLAY (experimental)' : ''}`,
-          `${l.dir === 'bull' ? 'Bullish' : 'Bearish'} no-wick · ${clock(l.candleOpen)} candle`,
+        [`${dot(l.dir)} ${title(l)}${da ? ' · DA PLAY (experimental)' : ''}${l.imb ? ' · 🌀 IMBALANCE PLAY' : ''}`,
+          `${side[0].toUpperCase()}${side.slice(1)} no-wick · ${clock(l.candleOpen)} candle`,
           ...(da ? [`Held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : []),
+          ...(l.imb ? [`🌀 Unfilled imbalance right ahead at ${l.imb.from}–${l.imb.to}: TP at its far edge (${l.setup.tp}, ${rr}R)`] : []),
           ...(l.choch ? [`🔄 Change of character setup: first ${TF_LABEL[inst.tf]} BOS against the ${TF_LABEL[inst.ext]}`] : [])].join('\n'),
+        checks.join('\n'),
         block('📊 <b>Trend</b>', [`${TF_LABEL[inst.tf]}: ${trend(l.internal)}`, `${TF_LABEL[inst.ext]}: ${trend(l.external)} ${bias}`]),
         `🕒 ${esc(l.session)} session · tap window closes ${clock(l.deadline)}`,
         notes(l),

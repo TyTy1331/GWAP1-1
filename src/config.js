@@ -5,7 +5,8 @@ export const TF_LABEL = { 60: '1m', 300: '5m', 900: '15m', 1800: '30m', 3600: '1
 export const TF_KEY = { 60: 'm1', 300: 'm5', 900: 'm15', 1800: 'm30', 3600: 'h1', 14400: 'h4' };
 
 export const config = {
-  pairs: ['OANDA:AUDUSD', 'OANDA:GBPUSD', 'OANDA:AUDJPY', 'FOREXCOM:GER40', 'CRYPTO:BTCUSD'],
+  // AUDCAD and USDCAD added 2026-11-26: both are pairs Bard trades in his recaps.
+  pairs: ['OANDA:AUDUSD', 'OANDA:GBPUSD', 'OANDA:AUDJPY', 'OANDA:AUDCAD', 'OANDA:USDCAD', 'FOREXCOM:GER40', 'CRYPTO:BTCUSD'],
   pip: 0.0001,
   // Per-instrument overrides. pip: the unit risk is shown in. scale: multiplies every pip-based threshold
   // (stop buffer, voids, large stop, decision areas). Also: unit (label), currencies (news),
@@ -13,11 +14,13 @@ export const config = {
   // Timeframes: tf (no-wicks and internal trend), ups (upgrades), ext (external trend). Default 15m / 30m,1H / 4H.
   // always: trades 24/7 (no forex weekend). da: false turns decision areas off (they are tuned for forex on the 15m).
   // choch: also alert no-wicks after the first internal BOS against the external trend (change of character).
+  // pullback: also alert with the external trend while the internal has 1 BOS against. Not Bard's rule
+  // (his videos, Nov 2026): kept for GER40 only, your choice. Elsewhere those setups are tracked silently.
   // scale comes from typical candle size: forex 15m ~5 pips, GER40 5m ~23 pts, BTCUSD 30m ~$250 (Nov 2026).
   instruments: {
     'OANDA:AUDJPY': { pip: 0.01 },
     'FOREXCOM:GER40': {
-      pip: 1, scale: 4, unit: 'pts', currencies: ['EUR', 'USD'], da: false, choch: true,
+      pip: 1, scale: 4, unit: 'pts', currencies: ['EUR', 'USD'], da: false, choch: true, pullback: true,
       tf: TF.M5, ups: [TF.M15, TF.M30], ext: TF.H1,
       // FOREX.com closes daily 23:05–00:00 Berlin and from Fri 22:05 to Mon 00:00 Berlin.
       dailyBreak: { zone: 'Europe/Berlin', start: '22:00', end: '24:00' },
@@ -50,8 +53,14 @@ export const config = {
   dayEnd: { zone: 'America/New_York', time: '17:00' },
   nearMissPips: 2,           // came this close without tapping, then reached TP → the setup is invalid
   structureBars: 500,
+  // Doji (ignored as structure): 'pct' = body under dojiBodyPct of the range; 'wicks' = both wicks bigger
+  // than the body (Bard's definition). Compare them with scripts/doji-test.js before switching.
+  dojiRule: 'pct',
   dojiBodyPct: 0.10,
-  stopBufferPips: 1.0,
+  stopBufferPips: 2.5,       // Bard: "two to three pip breathing room" (was 1.0 until 2026-11-26)
+  // Bard skips the New York open unless the setup is A+. Non-A+ alerts formed in this window get a flag.
+  // shortcut: assumes he means the 09:30 New York stock open; move the window if he means 08:00.
+  nyOpen: { zone: 'America/New_York', start: '09:15', end: '10:00' },
   largeStopPips: 20,
   voidMinRun: 5,
   voidFastRun: 3,       // ...or a fast push: this many candles covering voidFastPips
@@ -62,7 +71,7 @@ export const config = {
   quietFailMinutes: 30,  // feed hiccups only reach Telegram once a pair is this far behind (it catches up by itself)
   inboxFailRuns: 3,      // ...and Telegram-reply read errors after this many failed runs in a row
   dataGapToleranceMinutes: 15, // covers the daily 17:00 NY rollover break
-  newsMuteMinutes: 30,
+  newsMuteMinutes: 60,   // Bard's full breakdown (Sep 2026): skip one hour before and after red-folder news
   newsAheadMinutes: 120,
   newsRefreshHours: 6,
   newsUrl: 'https://nfs.faireconomy.media/ff_calendar_thisweek.json',
@@ -101,6 +110,6 @@ export function instrument(pair) {
     gapToleranceMinutes: i.gapToleranceMinutes ?? config.dataGapToleranceMinutes,
     dailyBreak: i.dailyBreak ?? null,
     tf: i.tf ?? TF.M15, ups: i.ups ?? [TF.M30, TF.H1], ext: i.ext ?? TF.H4,
-    always: Boolean(i.always), da: i.da ?? true, choch: Boolean(i.choch),
+    always: Boolean(i.always), da: i.da ?? true, choch: Boolean(i.choch), pullback: Boolean(i.pullback),
   };
 }

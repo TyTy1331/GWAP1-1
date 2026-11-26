@@ -10,10 +10,14 @@ const USAGE = 'Ask about a trade or a candle:\n<code>/why #175</code>\n<code>/wh
 function rule(l, inst) {
   const i = l.internal ?? {}, e = l.external ?? {}, iL = TF_LABEL[inst.tf], eL = TF_LABEL[inst.ext];
   if (l.playType === 'da') return `DA play: 1 ${iL} BOS against the ${eL}, with a held decision area behind the entry.`;
+  if (l.imb) return `Imbalance play: 1 ${iL} BOS against the ${eL}, with an unfilled imbalance right ahead (TP at its far edge).`;
   if (l.choch) return `Change of character: the first ${iL} BOS against the ${eL}, traded in the new direction.`;
   if (e.dir === l.dir) {
     if (i.dir === l.dir) return `Both trends agree (A+).`;
-    if (i.dir && i.count === 1) return `Pullback: the ${eL} agrees and the ${iL} has only 1 BOS against.`;
+    if (i.dir && i.count === 1) {
+      return inst.pullback ? `Pullback: the ${eL} agrees and the ${iL} has only 1 BOS against.`
+        : `Pullback: the ${eL} agrees, but the ${iL} has 1 BOS against. Bard needs both to agree, so only GER40 alerts these.`;
+    }
     return `The ${eL} agrees, but the ${iL} has ${i.count ?? 0} BOS against: more than a pullback.`;
   }
   const against = e.dir ? `Against the ${eL}` : `The ${eL} was unclear`;
@@ -27,6 +31,7 @@ function skipText(reason) {
   if (reason === 'outside session') return `outside trading hours (${s.at(-1).end}–${s[0].start} SAST is your no-trade zone).`;
   if (reason === 'red-folder news') return `high-impact news within ${config.newsMuteMinutes} min.`;
   if (reason === 'no opposite swing for a stop') return 'no swing on the other side to put a stop behind.';
+  if (reason.startsWith('pullback')) return "a pullback, which isn't Bard's rule.";
   if (reason.startsWith('trend')) return 'the trend rules were not met.';
   return `${reason}.`;
 }

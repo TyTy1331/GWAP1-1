@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSetup, recentNoWicks } from '../src/setup.js';
 import { seq, move } from './helpers/candles.js';
+import { config } from '../src/config.js';
+
+config.stopBufferPips = 1; // the stop formulas below were written for 1 pip of breathing room
 
 const TF = 900;
 const swing = (type, time, wick) => ({ type, time, level: wick, wick, confirmedAt: time + 3 * TF });

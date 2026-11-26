@@ -1,5 +1,6 @@
 import { config, instrument } from './config.js';
 import { addMarketBars, marketBarIndex, newsMute, sessionAt, flatTime } from './filters.js';
+import { isPullback } from './structure.js';
 
 // Silent levels are tracked for the journal but never alerted or counted: skipped setups (shadow)
 // and alerted ones that became invalid (you said so, near miss then TP, or tapped in no-trade hours).
@@ -50,19 +51,26 @@ function advanceManaged(l, c) {
   else if (tpHit) l.managedResult = m.tp === l.level ? 'BE' : 'TP';
 }
 
-// aplus / pullback / managed feed the rule-test scoreboard (what A+-only, no-pullback or the BE rule would have done).
+// aplus / pullback / managed / skip feed the rule-test scoreboard (A+ only, pullbacks, the BE rule).
+// rr: reward-to-risk of the real TP (1 except imbalance plays, whose TP is the imbalance's far edge).
 const result = (l, outcome, t, extra = {}) => ({ id: l.id, pair: l.pair, tf: l.tf, dir: l.dir, outcome: l.muted ? 'muted' : outcome, formed: l.formedClose, tapped: l.tapTime, closed: t,
-  aplus: l.internal?.dir === l.dir && l.external?.dir === l.dir, pullback: Boolean(l.internal?.dir && l.internal.dir !== l.dir), managed: l.managedResult,
+  aplus: l.internal?.dir === l.dir && l.external?.dir === l.dir, pullback: Boolean(l.internal && l.external && isPullback(l.dir, l.internal, l.external)), managed: l.managedResult,
+  ...(l.imb ? { rr: Math.round((Math.abs(l.setup.tp - l.level) / Math.abs(l.level - l.setup.stop)) * 10) / 10 } : {}),
+  ...(l.skipReason ? { skip: l.skipReason } : {}),
   ...extra, ...(silent(l) ? { shadow: true } : {}), ...(l.playType ? { play: l.playType } : {}) });
 
-// Rule tests: every alerted trade is also tracked, silently, with TP at 1:1.5 and with a stop 1 pip wider (still 1:1).
-// Same entry and tap as the real trade. Results land in state.tests: { id, test, closed, r }.
-export const TESTS = { tp15: 'TP at 1:1.5', buf2: 'Stop 1 pip wider' };
+// Rule tests: every alerted trade is also tracked, silently, with other stops (1, 2 and 3 pips of breathing
+// room beyond the same swing, or Bard's "previous candle" stop) and with TP at 1:1.5. Same entry and tap.
+// Results land in state.tests: { id, test, closed, r }. The real trade uses config.stopBufferPips.
+export const TESTS = { buf1: 'Stop with 1 pip of room', buf2: 'Stop with 2 pips of room', buf3: 'Stop with 3 pips of room', prev: 'Stop at the previous candle', tp15: 'TP at 1:1.5' };
 function startTests(l) {
-  const sign = l.dir === 'bull' ? 1 : -1, risk = Math.abs(l.level - l.setup.stop), wider = risk + instrument(l.pair).unit;
+  const sign = l.dir === 'bull' ? 1 : -1, unit = instrument(l.pair).unit, s = l.setup, risk = Math.abs(l.level - s.stop);
+  const swing = s.structure ?? s.stop + sign * unit; // setups from before 2026-11-26 used 1 pip of room
+  const oneToOne = (stop) => ({ stop, tp: l.level + (l.level - stop) });
   l.tests = {
-    tp15: { stop: l.setup.stop, tp: l.level + sign * 1.5 * risk },
-    buf2: { stop: l.level - sign * wider, tp: l.level + sign * wider },
+    buf1: oneToOne(swing - sign * unit), buf2: oneToOne(swing - sign * 2 * unit), buf3: oneToOne(swing - sign * 3 * unit),
+    ...(s.altStop !== null && s.altStop !== undefined ? { prev: oneToOne(s.altStop - sign * config.stopBufferPips * unit) } : {}),
+    tp15: { stop: s.stop, tp: l.level + sign * 1.5 * risk },
   };
 }
 function advanceTests(state, l, c, tapMinute) {
@@ -120,7 +128,7 @@ export function advanceMinute(state, pair, c, newsEvents) {
       l.muted = newsMute(newsEvents, pair, c.time);
       if (!l.muted) out.push({ kind: 'tap', id: `${l.id}:tap`, level: l, time: c.time });
       l.flatAt ??= flatTime(l.tapTime, l.pair);
-      if (!silent(l) && !l.muted && !l.playType) { startTests(l); advanceTests(state, l, c, true); }
+      if (!silent(l) && !l.muted && !l.playType && !l.imb) { startTests(l); advanceTests(state, l, c, true); }
       // In the tap minute only the stop counts: a wide minute can't fake a win.
       if (hitStop(l, c)) out.push(...resolve(l, 'lost', c.time, state.results));
     } else {

@@ -8,13 +8,14 @@ const COLUMNS = ['id', 'number', 'alerted', 'skip_reason', 'pair', 'timeframe', 
   'level', 'stop', 'alt_stop', 'tp', 'risk_pips', 'trend_15m', 'bos_15m', 'trend_4h', 'bos_4h', 'session', 'warnings',
   'upgrades', 'tap_utc', 'tap_n', 'bot_result', 'muted_by_news', 'result_utc', 'reported', 'reported_utc',
   'be_signal_utc', 'be_action', 'managed_result', 'play_type', 'da_below', 'da_above', 'range_pos', 'in_da', 'tp_beyond_da', 'invalid',
-  'test_tp15_r', 'test_wider_stop_r'];
+  'test_tp15_r', 'test_stop_2pips_r', 'test_stop_1pip_r', 'test_stop_3pips_r', 'test_prev_candle_stop_r',
+  'pre_entry_leg_pos', 'htf_nowick_against', 'ny_open'];
 
 const FINAL = new Set(['won', 'lost', 'closed', 'expired', 'unknown', 'nosetup']);
 const RESULT = { won: 'TP', lost: 'SL', expired: 'expired', unknown: 'unknown', nosetup: 'no setup', tracking: 'open', active: 'open' };
 const iso = (t) => (t ? new Date(t * 1000).toISOString().replace('.000Z', 'Z') : '');
 const cell = (v) => { const s = v === undefined || v === null ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-const signature = (l) => `${l.status}|${l.reported ?? ''}|${l.upgrades.length}|${l.managedResult ?? ''}|${l.invalid ?? ''}|${l.tests?.tp15.r ?? ''}|${l.tests?.buf2.r ?? ''}`;
+const signature = (l) => `${l.status}|${l.reported ?? ''}|${l.upgrades.length}|${l.managedResult ?? ''}|${l.invalid ?? ''}|${Object.values(l.tests ?? {}).map((v) => v.r ?? '').join(':')}`;
 
 export function journalRow(l) {
   const s = l.setup ?? {};
@@ -25,8 +26,9 @@ export function journalRow(l) {
     (s.warnings ?? []).join('; '), l.upgrades.map((tf) => TF_LABEL[tf]).join(';'), iso(l.tapTime), l.tapIndex ?? '',
     l.status === 'closed' ? `closed for the day ${l.closedR}R` : RESULT[l.status] ?? l.status, l.muted ? 'yes' : '', iso(l.resultTime), l.reported ?? '', iso(l.reportedAt),
     iso(l.beSignal?.time), l.beSignal ? (l.beSignal.mode === 'stop' ? 'stop to BE' : 'TP to BE') : '', l.managedResult ?? '',
-    l.playType ?? (l.choch ? 'choch' : 'normal'), s.da?.below, s.da?.above, s.da?.rangePos, s.da ? (s.da.inDA ? 'yes' : 'no') : '', s.da?.tpBeyond, l.invalid ?? '',
-    l.tests?.tp15.r ?? '', l.tests?.buf2.r ?? '',
+    l.playType ?? (l.imb ? 'imbalance' : l.choch ? 'choch' : 'normal'), s.da?.below, s.da?.above, s.da?.rangePos, s.da ? (s.da.inDA ? 'yes' : 'no') : '', s.da?.tpBeyond, l.invalid ?? '',
+    l.tests?.tp15?.r ?? '', l.tests?.buf2?.r ?? '', l.tests?.buf1?.r ?? '', l.tests?.buf3?.r ?? '', l.tests?.prev?.r ?? '',
+    l.leg?.pos ?? '', l.htfAgainst ? `${TF_LABEL[l.htfAgainst.tf]} ${l.htfAgainst.dir} ${l.htfAgainst.level}` : '', l.nyOpen ? 'yes' : '',
   ].map(cell).join(',');
 }
 

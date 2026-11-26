@@ -91,7 +91,7 @@ test('"invalid" (as #05 invalid or a reply to the alert) silences the trade and 
   assert.match(r.text, /#05 AUDUSD 15m SELL marked invalid/);
   assert.equal(s.levels[0].invalid, 'user said invalid');
   assert.equal(silent(s.levels[0]), true);
-  assert.ok(journalRow(s.levels[0]).endsWith(',user said invalid,,'));
+  assert.ok(journalRow(s.levels[0]).includes(',user said invalid,'));
 });
 
 test('reads past 100 messages in one run', async () => {

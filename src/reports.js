@@ -172,7 +172,7 @@ export function testsText(state, now, days = 30) {
   const since = now - days * 86400, R = { won: 1, lost: -1 };
   const base = state.results.filter((r) => !r.shadow && !r.play && r.closed > since && ['won', 'lost', 'closed'].includes(r.outcome));
   if (!base.length) return '';
-  const rOf = (r) => (r.outcome === 'closed' ? r.r : R[r.outcome]), byId = new Map(base.map((r) => [r.id, rOf(r)]));
+  const rOf = (r) => (r.outcome === 'closed' ? r.r : r.outcome === 'won' ? r.rr ?? 1 : R[r.outcome]), byId = new Map(base.map((r) => [r.id, rOf(r)]));
   const sum = (xs) => Math.round(xs.reduce((a, b) => a + b, 0) * 10) / 10, fmt = (x) => `${x > 0 ? '+' : ''}${x}R`;
   const arrow = (a, b) => (a > b ? '⬆️' : a < b ? '⬇️' : '➖');
   const now1 = base.map(rOf), w = now1.filter((x) => x > 0).length;
@@ -190,6 +190,12 @@ export function testsText(state, now, days = 30) {
     if (known.length) lines.push(`${arrow(sum(kept.map(rOf)), sum(known.map(rOf)))} ${label}: ${fmt(sum(kept.map(rOf)))} from ${kept.length} of ${known.length} trades`);
   };
   subset('Only A+ alerts', (r) => r.aplus);
-  subset('Without the pullback rule', (r) => !r.pullback);
+  subset('Without pullback alerts', (r) => !r.pullback);
+  // Pullbacks stopped alerting on 2026-11-26 (not Bard's rule, except GER40); they are still tracked silently.
+  const skipped = state.results.filter((r) => r.shadow && r.skip?.startsWith('pullback') && r.closed > since && ['won', 'lost', 'closed'].includes(r.outcome));
+  if (skipped.length) {
+    const rs = skipped.map(rOf);
+    lines.push(`⏭ Skipped pullbacks would have made ${fmt(sum(rs))} (${rs.filter((x) => x > 0).length}W/${rs.filter((x) => x < 0).length}L)`);
+  }
   return lines.join('\n');
 }

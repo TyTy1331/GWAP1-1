@@ -39,7 +39,7 @@ test('empty or failing feed raises FeedError without credentials in the message'
 });
 
 test('config lists the pairs and valid zones', () => {
-  assert.deepEqual(config.pairs, ['OANDA:AUDUSD', 'OANDA:GBPUSD', 'OANDA:AUDJPY', 'FOREXCOM:GER40', 'CRYPTO:BTCUSD']);
+  assert.deepEqual(config.pairs, ['OANDA:AUDUSD', 'OANDA:GBPUSD', 'OANDA:AUDJPY', 'OANDA:AUDCAD', 'OANDA:USDCAD', 'FOREXCOM:GER40', 'CRYPTO:BTCUSD']);
   const zones = [...config.sessions.allowed, ...config.sessions.excluded, ...Object.values(config.instruments).map((i) => i.dailyBreak).filter(Boolean)];
   for (const w of zones) assert.doesNotThrow(() => new Intl.DateTimeFormat('en', { timeZone: w.zone }));
 });

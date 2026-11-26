@@ -51,8 +51,10 @@ test('AE1: aligned with 4H, one BOS is enough', () => {
   assert.equal(isValid('bull', { dir: 'bull', count: 1 }, { dir: 'bull', count: 3 }), true);
 });
 
-test('one 15m BOS against the 4H is a pullback: trades with the 4H stay valid', () => {
-  assert.equal(isValid('bear', { dir: 'bull', count: 1 }, { dir: 'bear', count: 2 }), true);
+test('pullbacks (one 15m BOS against the 4H) are only valid where the instrument allows them (GER40)', () => {
+  assert.equal(isValid('bear', { dir: 'bull', count: 1 }, { dir: 'bear', count: 2 }), false, 'not Bard: the 15m must agree');
+  assert.equal(isValid('bear', { dir: 'bull', count: 1 }, { dir: 'bear', count: 2 }, true), true);
+  assert.equal(isValid('bear', { dir: 'bull', count: 2 }, { dir: 'bear', count: 2 }, true), false);
   assert.equal(isValid('bear', { dir: 'bull', count: 2 }, { dir: 'bear', count: 2 }), false);
   assert.equal(isValid('bull', { dir: 'bull', count: 1 }, { dir: 'bear', count: 2 }), false);
 });

@@ -2,8 +2,8 @@ import { pathToFileURL } from 'node:url';
 import { config, TF, TF_KEY, TF_LABEL, instrument, currencies } from './config.js';
 import { fetchCandles, credentialsFromEnv, isFresh, FeedError } from './candles.js';
 import { noWickDir, upgradesLevel } from './nowick.js';
-import { analyze, trendAt, isValid } from './structure.js';
-import { buildSetup, recentNoWicks } from './setup.js';
+import { analyze, trendAt, isValid, isPullback } from './structure.js';
+import { buildSetup, recentNoWicks, imbalanceAhead, legPosition, higherAgainst } from './setup.js';
 import { sessionAt, marketOpen, latestMarketClose, marketMinutesBetween, refreshNews, newsMute, upcomingNews, inWindow } from './filters.js';
 import { newLevel, upgrade, advanceMinute, markDataGap, prune, breakEvenSignals, silent } from './lifecycle.js';
 import { loadState, saveState } from './state.js';
@@ -76,22 +76,44 @@ export function processPair(state, pair, data, until, news) {
         return s && applyDA(s, dir, das);
       };
       let setup = build();
-      const trendOnly = session && !muted && !isValid(dir, internal, external);
+      const trendOnly = session && !muted && !isValid(dir, internal, external, inst.pullback);
       // DA play (experimental): counter-trend, but 1 BOS on the 15m and a held decision area behind entry.
       const zone = trendOnly && internal.dir === dir ? daPlayZone(dir, candles, das) : null;
       if (zone) setup = build(dir === 'bull' ? zone.lo : zone.hi);
+      // Imbalance play (Bard): 1 BOS against the external is enough when an unfilled imbalance sits right in
+      // front of the trade. TP goes to its far edge, so it needs at least 1:1.
+      const counter = trendOnly && !zone && internal.dir === dir && internal.count === 1;
+      let imb = counter && setup ? imbalanceAhead({ dir, candles, swings: aBase.swings, tf: inst.tf, inst }) : null;
+      if (imb) {
+        const risk = Math.abs(setup.entry - setup.stop), sign = dir === 'bull' ? 1 : -1;
+        const edge = dir === 'bull' ? imb.to : imb.from, rr = Math.abs(edge - setup.entry) / risk;
+        // shortcut: Bard's examples are "a bit" over 1:1, so a far edge is capped at 2R; revisit with journal data.
+        if (rr >= 1) setup = { ...setup, tp: rr > 2 ? Math.round((setup.entry + sign * 2 * risk) * 1e5) / 1e5 : edge };
+        else imb = null;
+      }
       // Change of character (GER40): the first internal BOS against the external trend, traded in the new direction.
-      const choch = trendOnly && !zone && inst.choch && internal.dir === dir && internal.count === 1;
+      const choch = counter && !imb && inst.choch;
+      const pullback = trendOnly && isPullback(dir, internal, external);
       const reason = !session ? 'outside session'
         : muted ? 'red-folder news'
         : zone ? (config.da.alertPlays ? null : 'DA play (alerts off)')
+        : imb ? null
         : choch ? (setup ? null : 'no opposite swing for a stop')
+        : pullback && !inst.pullback ? "pullback (not Bard's rule)"
         : trendOnly ? `trend (${TF_LABEL[inst.tf]} ${internal.dir ?? '?'}×${internal.count}, ${TF_LABEL[inst.ext]} ${external.dir ?? '?'})`
         : !setup ? 'no opposite swing for a stop' : null;
       // Skipped no-wicks are still tracked silently (no alerts) so the journal shows how they would have done.
       const level = newLevel({ pair, tf: inst.tf, candle: it.c, dir, setup, internal, external, session: session ?? 'none', num: reason ? undefined : nextNum(state) });
       if (zone) Object.assign(level, { playType: 'da', daZone: zone });
+      if (imb) level.imb = imb;
       if (choch) level.choch = true;
+      // Bard's extra checks, shown on the alert: pre-entry when the no-wick is low in its leg, an untapped
+      // higher-timeframe no-wick against the trade, and the New York open.
+      const htf = inst.ups.at(-1);
+      level.leg = legPosition({ dir, candles, swings: aBase.swings, tf: inst.tf });
+      level.htfAgainst = higherAgainst({ dir, higher: data[TF_KEY[htf]], higherTf: htf, trend: aHigher[htf] && trendAt(aHigher[htf].bos, it.t), base: candles, baseTf: inst.tf, t: it.t });
+      if (level.htfAgainst) level.htfAgainst.tf = htf;
+      if (inWindow(it.t, config.nyOpen)) level.nyOpen = true;
       state.levels.push(level);
       if (reason) {
         skipped.push({ time: it.t, dir, level: it.c.open, reason });

@@ -43,9 +43,11 @@ test('market minutes skip the weekend', () => {
   assert.equal(marketMinutesBetween(utc('2026-11-06T21:50:00Z'), utc('2026-11-08T22:10:00Z')), 20);
 });
 
-test('AE4: USD CPI at 13:30 UTC mutes 13:15, not 14:05', () => {
+test('USD CPI at 13:30 UTC mutes an hour either side (Bard): 12:45 and 14:25, not 14:35', () => {
+  assert.equal(newsMute(news, 'OANDA:GBPUSD', utc('2026-11-04T12:45:00Z')), true);
+  assert.equal(newsMute(news, 'OANDA:GBPUSD', utc('2026-11-04T14:25:00Z')), true);
   assert.equal(newsMute(news, 'OANDA:GBPUSD', utc('2026-11-04T13:15:00Z')), true);
-  assert.equal(newsMute(news, 'OANDA:GBPUSD', utc('2026-11-04T14:05:00Z')), false);
+  assert.equal(newsMute(news, 'OANDA:GBPUSD', utc('2026-11-04T14:35:00Z')), false);
 });
 
 test('GBP news mutes a London GBPUSD setup on its own (no session overlap)', () => {

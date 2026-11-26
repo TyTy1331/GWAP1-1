@@ -14,7 +14,7 @@ test("morning briefing: greeting, a tip or quote, each pair's 1H/4H bias and tod
     news: { ok: true, events: [
       { t: utc('2026-11-26T13:30:00Z'), country: 'USD', title: 'GDP' },
       { t: utc('2026-11-27T13:30:00Z'), country: 'USD', title: 'Tomorrow' },
-      { t: utc('2026-11-26T09:00:00Z'), country: 'CAD', title: 'Not mine' },
+      { t: utc('2026-11-26T09:00:00Z'), country: 'NZD', title: 'Not mine' },
     ] },
   });
   const lines = text.split('\n');
