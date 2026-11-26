@@ -7,8 +7,8 @@ import { buildSetup, recentNoWicks } from './setup.js';
 import { sessionAt, marketOpen, latestMarketClose, marketMinutesBetween, refreshNews, newsMute, upcomingNews, inWindow } from './filters.js';
 import { newLevel, upgrade, advanceMinute, markDataGap, prune, breakEvenSignals, silent } from './lifecycle.js';
 import { loadState, saveState } from './state.js';
-import { formatEvent, enqueue, deliver, TelegramError } from './telegram.js';
-import { checkinDue, checkinText, recapText } from './reports.js';
+import { formatEvent, enqueue, deliver, buttons, TelegramError } from './telegram.js';
+import { checkinDue, briefingText, recapText } from './reports.js';
 import { readInbox } from './inbox.js';
 import { syncJournal } from './journal.js';
 import { findDAs, applyDA, daPlayZone } from './da.js';
@@ -117,6 +117,22 @@ export function processPair(state, pair, data, until, news) {
   return { events, skipped };
 }
 
+// 1H and 4H trend of every pair for the morning briefing.
+async function briefingTrends(now, fetchOpts) {
+  const out = [];
+  for (const pair of config.pairs) {
+    const name = pair.split(':').pop();
+    try {
+      const at = async (tf) => trendAt(analyze(await fetchCandles({ pair, tf, count: 500, now, ...fetchOpts }), tf).bos, now);
+      out.push({ name, ext: instrument(pair).ext, h1: await at(TF.H1), h4: await at(TF.H4) });
+    } catch (e) {
+      if (!(e instanceof FeedError)) throw e;
+      out.push({ name, error: true });
+    }
+  }
+  return out;
+}
+
 export async function runOnce({ now = Math.floor(Date.now() / 1000), env = process.env, getCandles, fetchFn = fetch, log = console.log, wait } = {}) {
   const statePath = env.STATE_PATH ?? 'state/state.json';
   const { state, fresh, reason } = loadState(statePath);
@@ -162,7 +178,7 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
           for (const tf of new Set([inst.tf, ...inst.ups, inst.ext, ...(inst.da ? [TF.M30] : [])])) data[TF_KEY[tf]] = await get(tf, 500);
         }
         const { events, skipped } = processPair(state, pair, data, pUntil, state.news);
-        for (const e of events) enqueue(state, e.id, formatEvent(e, e.ctx));
+        for (const e of events) enqueue(state, e.id, formatEvent(e, e.ctx), buttons(e));
         log(`${pair}: ${events.length} event(s), ${skipped.length} no-wick(s) skipped`);
       } catch (e) {
         if (!(e instanceof FeedError)) throw e;
@@ -185,7 +201,11 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
 
     if (open) {
       const date = checkinDue(state, now);
-      if (date) { state.lastCheckin = date; enqueue(state, `checkin:${date}`, checkinText(state, now, latestData ? now - latestData : NaN)); }
+      if (date) {
+        state.lastCheckin = date;
+        const trends = await briefingTrends(now, { credentials, getCandles });
+        enqueue(state, `checkin:${date}`, briefingText({ date, now, trends, news: state.news, dataAgeSec: latestData ? now - latestData : NaN }));
+      }
     } else if (until && state.lastRecap !== until
       && config.pairs.every((p) => !state.pairs[p] || state.pairs[p].last1m >= until - instrument(p).gapToleranceMinutes * 60)) { // NAS100 stops 15 min before forex
       state.lastRecap = until;

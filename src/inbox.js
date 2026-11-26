@@ -1,6 +1,7 @@
 import { esc, tag } from './telegram.js';
 import { TF_LABEL } from './config.js';
 import { statsText } from './reports.js';
+import { whyText } from './why.js';
 
 const REPORT = /#(\d{1,3})\s*(TP|SL|B\/?E|INVALID)\b/gi;
 
@@ -29,7 +30,12 @@ export function applyReport(state, { num, outcome }, now) {
     for (const r of state.results) if (r.id === level.id) r.shadow = true;
     return `🚫 ${esc(label(level))} marked invalid. No more alerts for it; it is still tracked quietly for the journal.`;
   }
-  const changed = level.reported && level.reported !== outcome;
+  if (outcome === 'TAKEN') {
+    if (level.reported && level.reported !== 'TAKEN') return `📝 ${esc(label(level))} is already marked ${level.reported}.`;
+    Object.assign(level, { reported: 'TAKEN', reportedAt: now });
+    return `👀 ${esc(label(level))} marked as taken. Tap TP, SL or BE when it closes; until then the bot's own result counts for it.`;
+  }
+  const changed = level.reported && level.reported !== 'TAKEN' && level.reported !== outcome;
   Object.assign(level, { reported: outcome, reportedAt: now });
   return `📝 ${esc(label(level))} ${changed ? 'changed to' : 'marked'} ${{ TP: 'TP ✅', SL: 'SL ❌', BE: 'B/E ➖' }[outcome]}. It will be in the weekly recap.`;
 }
@@ -40,7 +46,7 @@ export async function readInbox(state, { token, chatId, fetchFn = fetch, now }) 
   const replies = [];
   // Telegram returns at most 100 updates per call and keeps unread ones for 24h: read until empty.
   for (let page = 0; page < 50; page++) {
-    const params = new URLSearchParams({ offset: String((state.tgOffset ?? 0) + 1), limit: '100', timeout: '0', allowed_updates: '["message","my_chat_member"]' });
+    const params = new URLSearchParams({ offset: String((state.tgOffset ?? 0) + 1), limit: '100', timeout: '0', allowed_updates: '["message","my_chat_member","callback_query"]' });
     const res = await fetchFn(`https://api.telegram.org/bot${token}/getUpdates?${params}`);
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) throw new Error(`Telegram getUpdates ${res.status}`);
@@ -52,9 +58,17 @@ export async function readInbox(state, { token, chatId, fetchFn = fetch, now }) 
         replies.push({ id: `joined:${joined.chat.id}`, text: `📍 I was added to "${esc(joined.chat.title ?? 'a chat')}". Its chat ID is <code>${joined.chat.id}</code>. To send alerts there, set the TELEGRAM_CHAT_ID secret to this number.` });
         continue;
       }
+      // A report button under an alert. Not answered: by the next run Telegram has already cleared the spinner.
+      const cq = u.callback_query, pressed = /^r:(\d{1,4}):(TP|SL|BE|INVALID|TAKEN)$/.exec(cq?.data ?? '');
+      if (cq) {
+        if (pressed && String(cq.message?.chat?.id) === chatId) replies.push({ id: `button:${u.update_id}`, text: applyReport(state, { num: Number(pressed[1]), outcome: pressed[2] }, now) });
+        continue;
+      }
       const msg = u.message;
       if (!msg?.text || String(msg.chat.id) !== chatId) continue;
       if (/^\/stats(@\w+)?\s*$/i.test(msg.text)) { replies.push({ id: `stats:${u.update_id}`, text: statsText(state, now) }); continue; }
+      const why = /^\/why(?:@\w+)?(?:\s+(.*))?$/is.exec(msg.text);
+      if (why) { replies.push({ id: `why:${u.update_id}`, text: whyText(state, why[1]) }); continue; }
       parseReports(replyReport(msg) ?? msg.text).forEach((r, i) => replies.push({ id: `report:${u.update_id}:${i}`, text: applyReport(state, r, now) }));
     }
   }

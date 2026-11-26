@@ -1,5 +1,6 @@
 import { config, TF_LABEL, instrument } from './config.js';
 import { localParts } from './filters.js';
+import { silent } from './lifecycle.js';
 
 export const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -85,13 +86,22 @@ export function formatEvent(e, ctx = {}) {
   }
 }
 
+// One-tap reporting under a trade's formation and result messages. A press sends "r:<num>:<outcome>"
+// to the bot, which reads it on its next run (up to 5 min later), same as a typed "#05TP".
+export function buttons(e) {
+  const l = e.level;
+  if (!['formed', 'result'].includes(e.kind) || !l?.num || silent(l)) return undefined;
+  const b = (text, outcome) => ({ text, callback_data: `r:${l.num}:${outcome}` });
+  return { inline_keyboard: [[b('✅ TP', 'TP'), b('❌ SL', 'SL'), b('➖ BE', 'BE')], [b('👀 Took it', 'TAKEN'), b('🚫 Invalid', 'INVALID')]] };
+}
+
 export class TelegramError extends Error {}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // 200 → sent. 429 → wait and retry. 5xx → one retry then throw. Other 4xx → permanent.
-export async function sendMessage(text, { token, chatId, fetchFn = fetch, html = true, wait = sleep }) {
-  const body = { chat_id: chatId, text, disable_web_page_preview: true, ...(html ? { parse_mode: 'HTML' } : {}) };
+export async function sendMessage(text, { token, chatId, fetchFn = fetch, html = true, wait = sleep, markup }) {
+  const body = { chat_id: chatId, text, disable_web_page_preview: true, ...(html ? { parse_mode: 'HTML' } : {}), ...(markup ? { reply_markup: markup } : {}) };
   let serverErrors = 0;
   for (let attempt = 0; attempt < 5; attempt++) {
     let res;
@@ -118,16 +128,16 @@ export async function sendMessage(text, { token, chatId, fetchFn = fetch, html =
 }
 
 // Queues an alert once. Undelivered messages stay in the outbox across runs until sent.
-export function enqueue(state, id, text) {
+export function enqueue(state, id, text, markup) {
   if (state.sent[id] || state.failed[id] || state.outbox.some((m) => m.id === id)) return;
-  state.outbox.push({ id, text });
+  state.outbox.push({ id, text, ...(markup ? { markup } : {}) });
 }
 
 // Sends the outbox in order, recording each success as it happens so a throw keeps progress.
 export async function deliver(state, opts) {
   while (state.outbox.length) {
     const m = state.outbox[0];
-    const result = await sendMessage(m.text, opts);
+    const result = await sendMessage(m.text, { ...opts, markup: m.markup });
     state.outbox.shift();
     if (result === 'sent') { state.sent[m.id] = opts.now; continue; }
     state.failed[m.id] = opts.now;

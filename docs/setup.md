@@ -79,7 +79,7 @@ If the run fails with a TradingView error, GitHub's servers may be blocked from 
 | 🚫 | The setup is no longer valid: price came within 2 pips of the no-wick without tapping it, then reached TP. Or you marked it invalid yourself |
 | 🛡️ | A no-wick formed against your open trade. In profit: move the stop to break-even. In drawdown: move TP to break-even (Bard's rule) |
 | ⚠️ | Something needs your eye: data stuck for 30+ min, Telegram replies failing 3 runs in a row, news calendar down, a data gap, a failed run. Single hiccups are retried quietly |
-| 🤖 | Daily check-in at 05:00 SAST on market days. **If it stops arriving, the bot has stopped** |
+| 👋 | Morning briefing at 05:00 SAST on market days: a trading tip or quote, each pair's 1H and 4H trend with the day's bias (🟢 favour buys, 🔴 favour sells, 🟡 mixed: trade with the pair's alert trend, which is the 4H, or the 1H for GER40), and today's high-impact news. **If it stops arriving, the bot has stopped** |
 | 📊 | Weekly recap after Friday's close |
 
 Some runs in the Actions tab show as "cancelled". That's normal: GitHub drops a waiting run when a newer one is queued, and the next run catches up.
@@ -138,7 +138,14 @@ The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA, 15m), **GER40** (FOREX.com
 
 ## Reporting your own trades (#05TP / #05SL / #05BE)
 
-Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP`, `#05SL` or `#05BE` for break-even (`#5 tp` and `#5 b/e` work too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it. Easier: swipe-reply to any alert for that trade (formed, upgraded or tapped) with just `TP`, `SL` or `BE`. Send `/stats` any time for your TP/SL/BE and the bot's own 1:1 tracking over the last 7 and 30 days (answered on the next run). To show it in the Telegram command menu, send @BotFather `/setcommands`, pick the bot and send `stats - Win/loss stats`.
+**Quickest: the buttons.** Every alert and every TP/SL result has buttons under it: ✅ TP, ❌ SL, ➖ BE, 👀 Took it and 🚫 Invalid. Tap one, and the bot confirms on its next run (within 5–15 minutes). **Took it** records that you entered the trade. Until you tap TP, SL or BE, the bot's own result counts for it in the recap and `/stats`. Only alerts sent after Nov 26, 2026 have buttons.
+
+Every setup gets a short number, shown in its alerts (e.g. **#05 AUDUSD 15m SELL**). When your trade closes, send the bot `#05TP`, `#05SL` or `#05BE` for break-even (`#5 tp` and `#5 b/e` work too, and so do several in one message). The next run, within 5–15 minutes, replies "📝 #05 … marked TP ✅". Sending a different result for the same number corrects it. Easier: swipe-reply to any alert for that trade (formed, upgraded or tapped) with just `TP`, `SL` or `BE`. Send `/stats` any time for your TP/SL/BE and the bot's own 1:1 tracking over the last 7 and 30 days (answered on the next run). Send `/why #175` to see why a trade was alerted (its trends, the rule that let it through and how it ended), or `/why AUDJPY 13:15` to ask about a candle by its open time in SAST: was it a no-wick, and if so, why wasn't it alerted? It covers the last 14 days. To show both in the Telegram command menu, send @BotFather `/setcommands`, pick the bot and send:
+
+```
+stats - Win/loss stats
+why - Why a trade or candle did or didn't alert
+```
 
 The weekly recap then shows **Your trades** (what you reported; break-evens are listed but don't count toward the win rate) separately from **Bot tracking** (whether the exact 1:1 levels were hit). Your results can differ from the bot's when you pre-enter, move to break-even, or pull TP in. Only the chat the alerts go to can report trades.
 
