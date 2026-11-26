@@ -1,5 +1,5 @@
 import { pathToFileURL } from 'node:url';
-import { config, TF, TF_KEY, TF_LABEL, instrument } from './config.js';
+import { config, TF, TF_KEY, TF_LABEL, instrument, currencies } from './config.js';
 import { fetchCandles, credentialsFromEnv, isFresh, FeedError } from './candles.js';
 import { noWickDir, upgradesLevel } from './nowick.js';
 import { analyze, trendAt, isValid } from './structure.js';
@@ -8,7 +8,7 @@ import { sessionAt, marketOpen, latestMarketClose, marketMinutesBetween, refresh
 import { newLevel, upgrade, advanceMinute, markDataGap, prune, breakEvenSignals, silent } from './lifecycle.js';
 import { loadState, saveState } from './state.js';
 import { formatEvent, enqueue, deliver, buttons, TelegramError } from './telegram.js';
-import { checkinDue, briefingText, recapText } from './reports.js';
+import { checkinDue, briefingText, recapText, testsText, personalTips } from './reports.js';
 import { readInbox } from './inbox.js';
 import { syncJournal } from './journal.js';
 import { findDAs, applyDA, daPlayZone } from './da.js';
@@ -124,7 +124,8 @@ async function briefingTrends(now, fetchOpts) {
     const name = pair.split(':').pop();
     try {
       const at = async (tf) => trendAt(analyze(await fetchCandles({ pair, tf, count: 500, now, ...fetchOpts }), tf).bos, now);
-      out.push({ name, ext: instrument(pair).ext, h1: await at(TF.H1), h4: await at(TF.H4) });
+      // fx: the two currencies, for the currency theme. Indices and crypto (own currencies list) are left out.
+      out.push({ name, ext: instrument(pair).ext, h1: await at(TF.H1), h4: await at(TF.H4), fx: config.instruments[pair]?.currencies ? null : currencies(pair) });
     } catch (e) {
       if (!(e instanceof FeedError)) throw e;
       out.push({ name, error: true });
@@ -204,7 +205,7 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       if (date) {
         state.lastCheckin = date;
         const trends = await briefingTrends(now, { credentials, getCandles });
-        enqueue(state, `checkin:${date}`, briefingText({ date, now, trends, news: state.news, dataAgeSec: latestData ? now - latestData : NaN }));
+        enqueue(state, `checkin:${date}`, briefingText({ date, now, trends, news: state.news, dataAgeSec: latestData ? now - latestData : NaN, tips: personalTips(state.levels, now) }));
       }
     } else if (until && state.lastRecap !== until
       && config.pairs.every((p) => !state.pairs[p] || state.pairs[p].last1m >= until - instrument(p).gapToleranceMinutes * 60)) { // NAS100 stops 15 min before forex
@@ -217,7 +218,7 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
         results: state.results.filter((r) => !r.shadow && (r.play ?? null) === play && week(r.closed)),
       });
       const main = section(null), da = section('da');
-      enqueue(state, `recap:${until}`, recapText(main.results, main.alerts, main.reported, da));
+      enqueue(state, `recap:${until}`, [recapText(main.results, main.alerts, main.reported, da), testsText(state, until)].filter(Boolean).join('\n\n'));
     }
     prune(state, now);
     if (env.GITHUB_EVENT_NAME === 'workflow_dispatch' && env.RUN_SOURCE !== 'cron') { // cron-job.org triggers stay silent

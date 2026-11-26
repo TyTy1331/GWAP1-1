@@ -1,7 +1,7 @@
 import { config, TF, TF_LABEL, instrument } from './config.js';
 import { localParts } from './filters.js';
 import { tag, esc, clock } from './telegram.js';
-import { silent } from './lifecycle.js';
+import { silent, TESTS } from './lifecycle.js';
 import { quoteFor } from './quotes.js';
 
 export function checkinDue(state, now) {
@@ -20,21 +20,63 @@ export function dayBias({ ext, h1, h4 }) {
   return ['🟡', `mixed · ${eL} ${word(e.dir)}, ${oL} ${word(o.dir)}: ${e.dir === 'bull' ? 'buys' : 'sells'} follow the ${eL}, expect pullbacks`];
 }
 
-// The 05:00 SAST message on market days. trends: [{ name, ext, h1, h4 }] or [{ name, error }].
-export function briefingText({ date, now, trends, news, dataAgeSec }) {
-  const q = quoteFor(date);
-  const lines = ['👋 <b>Hello, sir.</b>', q.by ? `💭 <i>“${esc(q.text)}”</i> — ${esc(q.by)}` : `🧠 <i>${esc(q.text)}</i>`, '', "📊 <b>Today's bias</b>"];
+// Currencies that every forex pair agrees on, from the 4H: "USD strong (AUDUSD, GBPUSD)". Needs 2+ pairs.
+// trends[].fx: [base, quote] for forex pairs, null for indices and crypto.
+export function currencyTheme(trends) {
+  const votes = new Map();
+  for (const t of trends) {
+    if (t.error || !t.fx || !t.h4.dir) continue;
+    const s = t.h4.dir === 'bull' ? 1 : -1;
+    for (const [c, v] of [[t.fx[0], s], [t.fx[1], -s]]) votes.set(c, [...(votes.get(c) ?? []), { v, name: t.name }]);
+  }
+  return [...votes].filter(([, vs]) => vs.length >= 2 && vs.every((x) => x.v === vs[0].v))
+    .map(([c, vs]) => `${c} ${vs[0].v > 0 ? 'strong' : 'weak'} (${vs.map((x) => x.name).join(', ')})`);
+}
+
+// Briefing lines from the last 14 days of alerts: the weakest and strongest groups, and a losing streak.
+// Results are yours where you reported, otherwise the bot's 1:1 tracking.
+export function personalTips(levels, now) {
+  const done = levels.filter((l) => !silent(l) && !l.playType && l.formedClose > now - 14 * 86400)
+    .map((l) => ({ l, o: outcomeOf(l) ?? { won: 'TP', lost: 'SL' }[l.status] })).filter((x) => x.o === 'TP' || x.o === 'SL');
+  const groups = new Map();
+  const add = (key, x) => { const g = groups.get(key) ?? { w: 0, n: 0 }; g.n++; if (x.o === 'TP') g.w++; groups.set(key, g); };
+  for (const x of done) {
+    const { l } = x, kind = l.choch ? 'CHoCH' : l.internal?.dir === l.dir && l.external?.dir === l.dir ? 'A+'
+      : l.external?.dir === l.dir ? 'Pullback' : 'Against-the-trend';
+    add(`${l.session} session`, x); add(l.pair.split(':').pop(), x); add(kind, x);
+  }
+  const tips = [];
+  for (const [key, g] of groups) {
+    if (g.n < 5) continue;
+    if (g.w / g.n <= 0.35) tips.push(`Last 2 weeks, ${key} alerts went ${g.w}W/${g.n - g.w}L. Be extra picky there today.`);
+    if (g.w / g.n >= 0.7) tips.push(`Last 2 weeks, ${key} alerts went ${g.w}W/${g.n - g.w}L. That's where the edge is: be sharp.`);
+  }
+  const yours = levels.filter((l) => l.reported === 'TP' || l.reported === 'SL').sort((a, b) => b.reportedAt - a.reportedAt);
+  if (yours.length >= 2 && yours[0].reported === 'SL' && yours[1].reported === 'SL') tips.push('Your last two reported trades were losses. One A+ setup at a time today, or smaller size.');
+  return tips;
+}
+
+// The 05:00 SAST message on market days. trends: [{ name, ext, h1, h4, fx }] or [{ name, error }].
+export function briefingText({ date, now, trends, news, dataAgeSec, tips = [] }) {
+  const q = quoteFor(date), day = Math.floor(Date.parse(`${date}T00:00:00Z`) / 86400000);
+  const lines = ['👋 <b>Hello, sir.</b>', q.by ? `💭 <i>“${esc(q.text)}”</i> — ${esc(q.by)}` : `🧠 <i>${esc(q.text)}</i>`,
+    ...(tips.length ? [`📒 ${esc(tips[day % tips.length])}`] : []), '', "📊 <b>Today's bias</b>"];
   for (const t of trends) {
     if (t.error) { lines.push(`⚠️ <b>${t.name}</b> data unavailable`); continue; }
     const [icon, text] = dayBias(t);
     lines.push(`${icon} <b>${t.name}</b> ${text}`, `      1H ${short(t.h1)} · 4H ${short(t.h4)}`);
   }
+  const theme = currencyTheme(trends);
+  if (theme.length) lines.push('', `💱 <b>Theme</b> (4H): ${theme.join(' · ')}. Trades on these pairs are one bet.`);
   const mine = new Set(config.pairs.flatMap((p) => instrument(p).currencies));
-  const today = (news?.events ?? []).filter((e) => e.t >= now && mine.has(e.country) && localParts(e.t, config.displayZone).date === date)
-    .sort((a, b) => a.t - b.t);
-  lines.push('', '📅 <b>High-impact news today</b>', ...today.map((e) => `• ${clock(e.t).slice(4)} ${esc(e.country)} ${esc(e.title)}`));
+  const onDate = (e) => mine.has(e.country) && localParts(e.t, config.displayZone).date === date;
+  const events = news?.events ?? [], holidays = events.filter((e) => e.holiday && onDate(e));
+  const today = events.filter((e) => !e.holiday && e.t >= now && onDate(e)).sort((a, b) => a.t - b.t);
+  lines.push('', '📅 <b>High-impact news today</b>',
+    ...[...new Set(holidays.map((e) => e.country))].map((c) => `🏖 ${esc(c)} bank holiday: thin liquidity, expect fake moves and wider spreads.`),
+    ...today.map((e) => `• ${clock(e.t).slice(4)} ${esc(e.country)} ${esc(e.title)}`));
   if (!news?.ok) lines.push('News calendar unavailable — check it yourself.');
-  else if (!today.length) lines.push('None for your pairs.');
+  else if (!today.length && !holidays.length) lines.push('None for your pairs.');
   lines.push('', `🤖 Bot running · latest data ${Number.isFinite(dataAgeSec) ? `${Math.round(dataAgeSec / 60)} min old` : 'not fetched this run'}`);
   return lines.join('\n');
 }
@@ -123,4 +165,31 @@ export function statsText(state, now) {
     period(state, now, 30, 'Last 30 days'),
     `🟡 ${live('active')} alert(s) waiting for a tap · ${live('tracking')} running`,
   ].join('\n\n');
+}
+
+// Weekly recap section: the same alerted trades under other rules, in R. Fills up as trades finish.
+export function testsText(state, now, days = 30) {
+  const since = now - days * 86400, R = { won: 1, lost: -1 };
+  const base = state.results.filter((r) => !r.shadow && !r.play && r.closed > since && ['won', 'lost', 'closed'].includes(r.outcome));
+  if (!base.length) return '';
+  const rOf = (r) => (r.outcome === 'closed' ? r.r : R[r.outcome]), byId = new Map(base.map((r) => [r.id, rOf(r)]));
+  const sum = (xs) => Math.round(xs.reduce((a, b) => a + b, 0) * 10) / 10, fmt = (x) => `${x > 0 ? '+' : ''}${x}R`;
+  const arrow = (a, b) => (a > b ? '⬆️' : a < b ? '⬇️' : '➖');
+  const now1 = base.map(rOf), w = now1.filter((x) => x > 0).length;
+  const lines = [`🧪 <b>Rule tests</b> (last ${days} days)`, `Now, exact 1:1: ${base.length} trades · ${w}W/${now1.filter((x) => x < 0).length}L · ${fmt(sum(now1))}`];
+  const vs = (label, pairs) => { // pairs: [testR, nowR] for the same trades
+    if (!pairs.length) return;
+    const a = sum(pairs.map((p) => p[0])), b = sum(pairs.map((p) => p[1]));
+    lines.push(`${arrow(a, b)} ${label}: ${fmt(a)} vs ${fmt(b)} (${pairs.length} trades)`);
+  };
+  for (const [k, label] of Object.entries(TESTS)) vs(label, (state.tests ?? []).filter((t) => t.test === k && byId.has(t.id)).map((t) => [t.r, byId.get(t.id)]));
+  const M = { TP: 1, SL: -1, BE: 0 };
+  vs('Following the BE rule', base.filter((r) => r.managed in M || (r.managed === 'closed' && r.outcome === 'closed')).map((r) => [M[r.managed] ?? r.r, rOf(r)]));
+  const subset = (label, keep) => {
+    const known = base.filter((r) => r.aplus !== undefined), kept = known.filter(keep);
+    if (known.length) lines.push(`${arrow(sum(kept.map(rOf)), sum(known.map(rOf)))} ${label}: ${fmt(sum(kept.map(rOf)))} from ${kept.length} of ${known.length} trades`);
+  };
+  subset('Only A+ alerts', (r) => r.aplus);
+  subset('Without the pullback rule', (r) => !r.pullback);
+  return lines.join('\n');
 }

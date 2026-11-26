@@ -82,8 +82,8 @@ export function parseNews(json) {
   const list = typeof json === 'string' ? JSON.parse(json) : json;
   if (!Array.isArray(list)) throw new Error('news feed is not a list');
   return list
-    .filter((e) => e.impact === 'High' && e.date)
-    .map((e) => ({ t: Math.floor(Date.parse(e.date) / 1000), country: e.country, title: String(e.title ?? '') }))
+    .filter((e) => (e.impact === 'High' || e.impact === 'Holiday') && e.date)
+    .map((e) => ({ t: Math.floor(Date.parse(e.date) / 1000), country: e.country, title: String(e.title ?? ''), ...(e.impact === 'Holiday' ? { holiday: true } : {}) }))
     .filter((e) => Number.isFinite(e.t));
 }
 
@@ -98,7 +98,8 @@ export async function refreshNews(cache, now, fetchFn = fetch) {
   }
 }
 
-const forPair = (events, pair) => { const c = instrument(pair).currencies; return events.filter((e) => c.includes(e.country)); };
+// Bank holidays are kept for the morning briefing only: they never mute or show on alerts.
+const forPair = (events, pair) => { const c = instrument(pair).currencies; return events.filter((e) => !e.holiday && c.includes(e.country)); };
 
 export function newsMute(events, pair, t) {
   const w = config.newsMuteMinutes * 60;

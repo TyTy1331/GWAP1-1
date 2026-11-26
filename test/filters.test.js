@@ -56,7 +56,9 @@ test('GBP news mutes a London GBPUSD setup on its own (no session overlap)', () 
 test('AUD news does not mute GBPUSD; low impact and holidays are ignored', () => {
   assert.equal(newsMute(news, 'OANDA:GBPUSD', utc('2026-11-05T00:30:00Z')), false);
   assert.equal(newsMute(news, 'OANDA:AUDUSD', utc('2026-11-05T00:30:00Z')), true);
-  assert.equal(news.length, 3);
+  assert.equal(news.filter((e) => !e.holiday).length, 3);
+  assert.equal(news.filter((e) => e.holiday && e.country === 'GBP').length, 1, 'holidays are kept for the briefing');
+  assert.equal(newsMute(news, 'OANDA:GBPUSD', utc('2026-11-04T00:00:00Z')), false, 'a bank holiday never mutes');
 });
 
 test('upcoming news: within 2 hours only', () => {
@@ -69,7 +71,7 @@ test('news feed failure keeps the cache and flags unavailable', async () => {
   const bad = async () => ({ ok: true, text: async () => '<html>' });
   const r = await refreshNews(cache, 7 * 3600, bad);
   assert.equal(r.ok, false);
-  assert.equal(r.events.length, 3);
+  assert.equal(r.events.length, 4);
   const fresh = await refreshNews(cache, 3600, bad);
   assert.equal(fresh, cache, 'not refreshed within 6 hours');
 });

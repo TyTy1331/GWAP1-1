@@ -50,7 +50,35 @@ function advanceManaged(l, c) {
   else if (tpHit) l.managedResult = m.tp === l.level ? 'BE' : 'TP';
 }
 
-const result = (l, outcome, t, extra = {}) => ({ id: l.id, pair: l.pair, tf: l.tf, dir: l.dir, outcome: l.muted ? 'muted' : outcome, formed: l.formedClose, tapped: l.tapTime, closed: t, ...extra, ...(silent(l) ? { shadow: true } : {}), ...(l.playType ? { play: l.playType } : {}) });
+// aplus / pullback / managed feed the rule-test scoreboard (what A+-only, no-pullback or the BE rule would have done).
+const result = (l, outcome, t, extra = {}) => ({ id: l.id, pair: l.pair, tf: l.tf, dir: l.dir, outcome: l.muted ? 'muted' : outcome, formed: l.formedClose, tapped: l.tapTime, closed: t,
+  aplus: l.internal?.dir === l.dir && l.external?.dir === l.dir, pullback: Boolean(l.internal?.dir && l.internal.dir !== l.dir), managed: l.managedResult,
+  ...extra, ...(silent(l) ? { shadow: true } : {}), ...(l.playType ? { play: l.playType } : {}) });
+
+// Rule tests: every alerted trade is also tracked, silently, with TP at 1:1.5 and with a stop 1 pip wider (still 1:1).
+// Same entry and tap as the real trade. Results land in state.tests: { id, test, closed, r }.
+export const TESTS = { tp15: 'TP at 1:1.5', buf2: 'Stop 1 pip wider' };
+function startTests(l) {
+  const sign = l.dir === 'bull' ? 1 : -1, risk = Math.abs(l.level - l.setup.stop), wider = risk + instrument(l.pair).unit;
+  l.tests = {
+    tp15: { stop: l.setup.stop, tp: l.level + sign * 1.5 * risk },
+    buf2: { stop: l.level - sign * wider, tp: l.level + sign * wider },
+  };
+}
+function advanceTests(state, l, c, tapMinute) {
+  const bull = l.dir === 'bull';
+  for (const [test, v] of Object.entries(l.tests)) {
+    if (v.r !== undefined) continue;
+    const risk = Math.abs(l.level - v.stop), reward = Math.abs(v.tp - l.level);
+    const flat = c.time >= l.flatAt, stop = bull ? c.low <= v.stop : c.high >= v.stop, tp = !tapMinute && (bull ? c.high >= v.tp : c.low <= v.tp);
+    if (flat) v.r = Math.round(((bull ? c.open - l.level : l.level - c.open) / risk) * 10) / 10;
+    else if (stop) v.r = -1;
+    else if (tp) v.r = Math.round((reward / risk) * 10) / 10;
+    else continue;
+    state.tests ??= [];
+    state.tests.push({ id: l.id, test, closed: c.time, r: v.r });
+  }
+}
 
 function resolve(l, outcome, t, results) {
   l.status = outcome === 'won' ? 'won' : 'lost';
@@ -91,9 +119,14 @@ export function advanceMinute(state, pair, c, newsEvents) {
       if (!l.invalid && !sessionAt(c.time)) Object.assign(l, { invalid: 'tapped in no-trade hours', invalidAt: c.time });
       l.muted = newsMute(newsEvents, pair, c.time);
       if (!l.muted) out.push({ kind: 'tap', id: `${l.id}:tap`, level: l, time: c.time });
+      l.flatAt ??= flatTime(l.tapTime, l.pair);
+      if (!silent(l) && !l.muted && !l.playType) { startTests(l); advanceTests(state, l, c, true); }
       // In the tap minute only the stop counts: a wide minute can't fake a win.
       if (hitStop(l, c)) out.push(...resolve(l, 'lost', c.time, state.results));
-    } else if (l.status === 'tracking') {
+    } else {
+      // Rule tests can outlive the real trade (a 1:1.5 TP is further away).
+      if (l.tests && l.tapTime < c.time) advanceTests(state, l, c, false);
+      if (l.status !== 'tracking') continue;
       advanceManaged(l, c);
       l.flatAt ??= flatTime(l.tapTime, l.pair);
       if (c.time >= l.flatAt) out.push(...flatten(l, c, state.results));
@@ -107,6 +140,7 @@ export function advanceMinute(state, pair, c, newsEvents) {
 
 // Missing 1m history beyond normal closures: live levels can't be judged honestly.
 export function markDataGap(state, pair, from, to) {
+  for (const l of state.levels) if (l.pair === pair && l.tests) for (const v of Object.values(l.tests)) v.r ??= null; // unknown
   const hit = state.levels.filter((l) => l.pair === pair && (l.status === 'active' || l.status === 'tracking'));
   for (const l of hit) {
     if (l.status === 'tracking') state.results.push({ ...result(l, 'unknown', to), outcome: 'unknown' });
@@ -123,4 +157,5 @@ export function prune(state, now) {
     for (const [id, t] of Object.entries(state[k])) if (t < cutoff) delete state[k][id];
   }
   state.results = state.results.filter((r) => r.closed > now - 90 * 86400);
+  state.tests = (state.tests ?? []).filter((r) => r.closed > now - 90 * 86400);
 }

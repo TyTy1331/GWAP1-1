@@ -41,6 +41,8 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
+      # Stays awake ~4 minutes and checks every minute, so alerts and button replies arrive within
+      # about a minute instead of 5–15. State is pushed after every pass, so a cancelled job loses nothing.
       - name: Run bot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -49,21 +51,23 @@ jobs:
           TV_SIGNATURE: ${{ secrets.TV_SIGNATURE }}
           STATE_PATH: state/state.json
           RUN_SOURCE: ${{ inputs.source }}
-        run: node src/run.js
-
-      - name: Save state
-        if: ${{ !cancelled() }}
-        env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cd state
-          [ -f state.json ] || exit 0
-          git add state.json journal 2>/dev/null || git add state.json
-          if git rev-parse -q --verify HEAD >/dev/null && git diff --cached --quiet; then echo "state unchanged"; exit 0; fi
-          # One snapshot commit with no history: the branch never grows. The journal files inside it keep every trade.
-          git checkout -q --orphan snapshot
-          git -c user.name=nowick-bot -c user.email=nowick-bot@users.noreply.github.com commit -q -m "state $(date -u +%FT%TZ)"
-          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:bot-state
+          end=$((SECONDS + 240)); rc=0
+          while :; do
+            node src/run.js || rc=1
+            bash scripts/save-state.sh || rc=1
+            [ $SECONDS -ge $end ] && break
+            export RUN_SOURCE=cron # "Manual run OK" only on the first pass
+            sleep $(( (65 - $(date +%s) % 60) % 60 + 1 )) # just after the next 1m candle closes
+          done
+          exit $rc
+
+      - name: Save state
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/save-state.sh
 
       - name: Keep schedule alive
         if: ${{ !cancelled() }}
