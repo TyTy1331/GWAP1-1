@@ -12,11 +12,12 @@ export const config = {
   // dailyBreak {zone,start,end} (no stale warning) and gapToleranceMinutes — for indices like FX:NAS100.
   // Timeframes: tf (no-wicks and internal trend), ups (upgrades), ext (external trend). Default 15m / 30m,1H / 4H.
   // always: trades 24/7 (no forex weekend). da: false turns decision areas off (they are tuned for forex on the 15m).
+  // choch: also alert no-wicks after the first internal BOS against the external trend (change of character).
   // scale comes from typical candle size: forex 15m ~5 pips, GER40 5m ~23 pts, BTCUSD 30m ~$250 (Nov 2026).
   instruments: {
     'OANDA:AUDJPY': { pip: 0.01 },
     'FOREXCOM:GER40': {
-      pip: 1, scale: 4, unit: 'pts', currencies: ['EUR', 'USD'], da: false,
+      pip: 1, scale: 4, unit: 'pts', currencies: ['EUR', 'USD'], da: false, choch: true,
       tf: TF.M5, ups: [TF.M15, TF.M30], ext: TF.H1,
       // FOREX.com closes daily 23:05–00:00 Berlin and from Fri 22:05 to Mon 00:00 Berlin.
       dailyBreak: { zone: 'Europe/Berlin', start: '22:00', end: '24:00' },
@@ -100,6 +101,6 @@ export function instrument(pair) {
     gapToleranceMinutes: i.gapToleranceMinutes ?? config.dataGapToleranceMinutes,
     dailyBreak: i.dailyBreak ?? null,
     tf: i.tf ?? TF.M15, ups: i.ups ?? [TF.M30, TF.H1], ext: i.ext ?? TF.H4,
-    always: Boolean(i.always), da: i.da ?? true,
+    always: Boolean(i.always), da: i.da ?? true, choch: Boolean(i.choch),
   };
 }

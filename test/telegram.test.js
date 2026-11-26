@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatEvent, warnLines, sendMessage, deliver, enqueue, esc, TelegramError } from '../src/telegram.js';
+import { formatEvent, sendMessage, deliver, enqueue, esc, TelegramError } from '../src/telegram.js';
 import { freshState } from '../src/state.js';
 import { utc } from './helpers/candles.js';
 
@@ -12,7 +12,7 @@ const level = {
 
 test('formation message names the trade and its confluences, not entry/stop/TP', () => {
   const text = formatEvent({ kind: 'formed', level }, { upcoming: [{ country: 'GBP', title: 'GDP <prelim>', t: utc('2026-11-04T11:00:00Z') }], newsUnavailable: true });
-  for (const s of ['🟢 <b>GBPUSD 15m BUY ⭐ A+</b>', 'Wed 10:00 candle', '15m: bullish (2 BOS)', '4H: bullish (1 BOS) ✅ aligned', 'London session', 'closes Wed 14:30', '⚠️ <b>Watch out</b>\n• Unfilled void',
+  for (const s of ['🟢 <b>GBPUSD 15m BUY ⭐ A+</b>', 'Wed 10:00 candle', '15m: bullish (2 BOS)', '4H: bullish (1 BOS) ✅ aligned', 'London session', 'closes Wed 14:30',
     'GDP &lt;prelim&gt;', 'News check unavailable']) assert.ok(text.includes(s), `missing: ${s}\n${text}`);
   for (const s of ['Entry', 'Stop', 'TP:', '1.3446', '1.3468']) assert.ok(!text.includes(s), `should not show: ${s}`);
 });
@@ -25,15 +25,11 @@ test('A+ only when the 15m and 4H both point the trade direction; the tag follow
   assert.ok(formatEvent({ kind: 'tap', level: { ...level, tapIndex: 1 }, time: level.deadline }).includes('BUY ⭐ A+</b> · tapped'));
 });
 
-test('no warnings means no warning lines', () => {
-  const text = formatEvent({ kind: 'formed', level: { ...level, setup: { ...level.setup, warnings: [] } } });
-  assert.ok(!text.includes('⚠️'));
-});
-
-test('many voids collapse into one average line', () => {
-  const lines = warnLines(['Unfilled void against the trade at 109.146–109.642', 'Large stop: 70.2 pips', 'Unfilled void against the trade at 110.912–111.196']);
-  assert.deepEqual(lines, ['• 2 unfilled voids against the trade, averaging 110.224 (109.146–111.196)', '• Large stop: 70.2 pips']);
-  assert.deepEqual(warnLines(['Unfilled void against the trade at 1.344–1.345']), ['• Unfilled void against the trade at 1.344–1.345']);
+test('warnings stay in the journal but are never shown in alerts', () => {
+  for (const kind of ['formed', 'upgrade']) {
+    const text = formatEvent({ kind, level }, {});
+    assert.ok(!text.includes('⚠️') && !text.includes('Unfilled void'), text);
+  }
 });
 
 test('escape covers &, < and >', () => assert.equal(esc('a&b<c>'), 'a&amp;b&lt;c&gt;'));

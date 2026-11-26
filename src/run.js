@@ -80,14 +80,18 @@ export function processPair(state, pair, data, until, news) {
       // DA play (experimental): counter-trend, but 1 BOS on the 15m and a held decision area behind entry.
       const zone = trendOnly && internal.dir === dir ? daPlayZone(dir, candles, das) : null;
       if (zone) setup = build(dir === 'bull' ? zone.lo : zone.hi);
+      // Change of character (GER40): the first internal BOS against the external trend, traded in the new direction.
+      const choch = trendOnly && !zone && inst.choch && internal.dir === dir && internal.count === 1;
       const reason = !session ? 'outside session'
         : muted ? 'red-folder news'
         : zone ? (config.da.alertPlays ? null : 'DA play (alerts off)')
+        : choch ? (setup ? null : 'no opposite swing for a stop')
         : trendOnly ? `trend (${TF_LABEL[inst.tf]} ${internal.dir ?? '?'}×${internal.count}, ${TF_LABEL[inst.ext]} ${external.dir ?? '?'})`
         : !setup ? 'no opposite swing for a stop' : null;
       // Skipped no-wicks are still tracked silently (no alerts) so the journal shows how they would have done.
       const level = newLevel({ pair, tf: inst.tf, candle: it.c, dir, setup, internal, external, session: session ?? 'none', num: reason ? undefined : nextNum(state) });
       if (zone) Object.assign(level, { playType: 'da', daZone: zone });
+      if (choch) level.choch = true;
       state.levels.push(level);
       if (reason) {
         skipped.push({ time: it.t, dir, level: it.c.open, reason });

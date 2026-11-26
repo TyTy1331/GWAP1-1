@@ -24,7 +24,7 @@ export function journalRow(l) {
     (s.warnings ?? []).join('; '), l.upgrades.map((tf) => TF_LABEL[tf]).join(';'), iso(l.tapTime), l.tapIndex ?? '',
     l.status === 'closed' ? `closed for the day ${l.closedR}R` : RESULT[l.status] ?? l.status, l.muted ? 'yes' : '', iso(l.resultTime), l.reported ?? '', iso(l.reportedAt),
     iso(l.beSignal?.time), l.beSignal ? (l.beSignal.mode === 'stop' ? 'stop to BE' : 'TP to BE') : '', l.managedResult ?? '',
-    l.playType ?? 'normal', s.da?.below, s.da?.above, s.da?.rangePos, s.da ? (s.da.inDA ? 'yes' : 'no') : '', s.da?.tpBeyond, l.invalid ?? '',
+    l.playType ?? (l.choch ? 'choch' : 'normal'), s.da?.below, s.da?.above, s.da?.rangePos, s.da ? (s.da.inDA ? 'yes' : 'no') : '', s.da?.tpBeyond, l.invalid ?? '',
   ].map(cell).join(',');
 }
 

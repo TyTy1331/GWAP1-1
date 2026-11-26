@@ -226,3 +226,32 @@ test('BTCUSD: 30m no-wick against the 4H alerts on a Saturday', () => {
   assert.deepEqual(events.map((e) => e.kind), ['formed']);
   assert.match(formatEvent(events[0], events[0].ctx), /BTCUSD 30m BUY[\s\S]*30m: bullish[\s\S]*4H: bullish/);
 });
+
+// Uptrend, then the first bearish BOS (a change of character), then a bearish no-wick; the external trend is still bullish.
+function chochData(nwOpen, tf, ext, k, keys) {
+  const sc = (r) => r.map((x) => Math.round(x * k * 1e5) / 1e5);
+  const rows = zigzag([0.700, 0.702, 0.701, 0.703, 0.702, 0.704, 0.7030, 0.7036, 0.7012]).map(sc);
+  const base = seq(nwOpen - rows.length * tf, tf, rows);
+  const [o, h, l, c] = sc([0.7012, 0.7012, 0.7004, 0.7006]);
+  base.push({ time: nwOpen, open: o, high: h, low: l, close: c });
+  const up = seq(nwOpen - 18 * ext, ext, zigzag(UP).map(sc));
+  return { m1: [], [keys[0]]: base, [keys[1]]: up };
+}
+
+test('GER40 alerts a no-wick at a change of character, labelled CHoCH; forex still skips it', () => {
+  const nw = utc('2026-11-04T07:00:00Z'); // 09:00 SAST
+  const ger = 'FOREXCOM:GER40', state = freshState();
+  state.pairs[ger] = { last1m: nw + 300, last15: nw };
+  const { events } = processPair(state, ger, chochData(nw, 300, 3600, 35000, ['m5', 'h1']), nw + 360, noNews);
+  assert.deepEqual(events.map((e) => e.kind), ['formed']);
+  assert.equal(state.levels[0].choch, true);
+  const text = formatEvent(events[0], events[0].ctx);
+  for (const s of ['GER40 5m SELL 🔄 CHoCH</b>', 'Change of character setup: first 5m BOS against the 1H', '5m: bearish (1 BOS)', '1H: bullish', 'against (change of character, 1 BOS)']) assert.ok(text.includes(s), `missing ${s}\n${text}`);
+  assert.ok(!text.includes('A+'));
+
+  const fx = freshState();
+  fx.pairs[PAIR] = { last1m: nw + 900, last15: nw };
+  const { events: none, skipped } = processPair(fx, PAIR, chochData(nw, 900, 14400, 1, ['m15', 'h4']), nw + 960, noNews);
+  assert.equal(none.length, 0);
+  assert.match(skipped[0].reason, /^trend \(15m bear×1, 4H bull\)/);
+});

@@ -23,28 +23,11 @@ const dot = (dir) => (dir === 'bull' ? '🟢' : '🔴');
 const trend = (t) => (t.dir ? `${t.dir === 'bull' ? 'bullish' : 'bearish'} (${t.count} BOS)` : 'unclear');
 // A+: the internal and external trend both point the trade's way (journal Nov 4–25: 65% vs 38% when against).
 export const aPlus = (l) => l.internal?.dir === l.dir && l.external?.dir === l.dir;
-const title = (l) => `<b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}${aPlus(l) ? ' ⭐ A+' : ''}</b>`;
-
-// Several voids would flood the alert, so they become one line: how many, their average level and full span.
-export function warnLines(warnings) {
-  const voids = [], rest = [];
-  for (const w of warnings) {
-    const m = /^Unfilled void against the trade at ([\d.]+)–([\d.]+)$/.exec(w);
-    if (m) voids.push([m[1], m[2]]); else rest.push(w);
-  }
-  if (voids.length > 1) {
-    const dp = Math.max(...voids.flat().map((x) => x.split('.')[1]?.length ?? 0));
-    const nums = voids.flat().map(Number);
-    const avg = (voids.reduce((a, [f, t]) => a + (+f + +t) / 2, 0) / voids.length).toFixed(dp);
-    rest.unshift(`${voids.length} unfilled voids against the trade, averaging ${avg} (${Math.min(...nums)}–${Math.max(...nums)})`);
-  } else if (voids.length) rest.unshift(`Unfilled void against the trade at ${voids[0][0]}–${voids[0][1]}`);
-  return rest.map((w) => `• ${esc(w)}`);
-}
+const title = (l) => `<b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}${aPlus(l) ? ' ⭐ A+' : ''}${l.choch ? ' 🔄 CHoCH' : ''}</b>`;
 
 // A titled block, or nothing when it has no lines. Blocks are separated by a blank line.
 const block = (heading, lines) => (lines.length ? [heading, ...lines].join('\n') : '');
 const blocks = (...b) => b.filter(Boolean).join('\n\n');
-const cautions = (l) => block('⚠️ <b>Watch out</b>', warnLines(l.setup.warnings));
 const notes = (l) => block('ℹ️ <b>Good to know</b>', (l.setup.notes ?? []).map((n) => `• ${esc(n)}`));
 
 // Alerts name the trade and its confluences only; entry, stop and TP are the trader's call.
@@ -52,10 +35,10 @@ export function formatEvent(e, ctx = {}) {
   const l = e.level;
   switch (e.kind) {
     case 'formed': {
-      const da = l.playType === 'da';
+      const da = l.playType === 'da', inst = instrument(l.pair);
       const bias = l.external.dir === l.dir
         ? (l.internal.dir === l.dir ? '✅ aligned' : '✅ aligned (pullback: 1 BOS against)')
-        : da ? '↩️ against (DA play, 1 BOS)' : '↩️ against (2 BOS rule met)';
+        : da ? '↩️ against (DA play, 1 BOS)' : l.choch ? '↩️ against (change of character, 1 BOS)' : '↩️ against (2 BOS rule met)';
       const news = [
         ...(ctx.upcoming ?? []).map((n) => `• ${esc(n.country)} ${esc(n.title)} at ${clock(n.t)}`),
         ...(ctx.newsUnavailable ? ['• News check unavailable — check the calendar yourself'] : []),
@@ -63,10 +46,10 @@ export function formatEvent(e, ctx = {}) {
       return blocks(
         [`${dot(l.dir)} ${title(l)}${da ? ' · DA PLAY (experimental)' : ''}`,
           `${l.dir === 'bull' ? 'Bullish' : 'Bearish'} no-wick · ${clock(l.candleOpen)} candle`,
-          ...(da ? [`Held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : [])].join('\n'),
-        block('📊 <b>Trend</b>', [`${TF_LABEL[instrument(l.pair).tf]}: ${trend(l.internal)}`, `${TF_LABEL[instrument(l.pair).ext]}: ${trend(l.external)} ${bias}`]),
+          ...(da ? [`Held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : []),
+          ...(l.choch ? [`🔄 Change of character setup: first ${TF_LABEL[inst.tf]} BOS against the ${TF_LABEL[inst.ext]}`] : [])].join('\n'),
+        block('📊 <b>Trend</b>', [`${TF_LABEL[inst.tf]}: ${trend(l.internal)}`, `${TF_LABEL[inst.ext]}: ${trend(l.external)} ${bias}`]),
         `🕒 ${esc(l.session)} session · tap window closes ${clock(l.deadline)}`,
-        cautions(l),
         notes(l),
         block('📅 <b>News</b>', news),
       );
@@ -74,7 +57,6 @@ export function formatEvent(e, ctx = {}) {
     case 'upgrade':
       return blocks(
         `🔼 ${title(l)} · upgraded\nThe ${TF_LABEL[l.tf]} candle is a no-wick too · ${clock(l.candleOpen)} candle`,
-        cautions(l),
         notes(l),
         `🕒 Tap window now closes ${clock(l.deadline)}`,
       );
@@ -83,8 +65,10 @@ export function formatEvent(e, ctx = {}) {
     case 'result':
       if (e.outcome === 'closed') return `⏹ ${title(l)} · closed for the day (${l.closedR > 0 ? '+' : ''}${l.closedR}R)\n${clock(e.time)}`;
       return `${e.outcome === 'won' ? '✅' : '❌'} ${title(l)} · ${e.outcome === 'won' ? 'TP hit (+1R)' : 'stopped out (−1R)'}\n${clock(e.time)}`;
-    case 'invalid':
-      return `🚫 ${title(l)} · no longer valid\nCame within ${config.nearMissPips} pips of the no-wick without tapping, then reached TP · ${clock(e.time)}`;
+    case 'invalid': {
+      const i = instrument(l.pair), near = +((config.nearMissPips * i.unit) / i.pip).toFixed(1);
+      return `🚫 ${title(l)} · no longer valid\nCame within ${near} ${i.name} of the no-wick without tapping, then reached TP · ${clock(e.time)}`;
+    }
     case 'be': {
       const b = l.beSignal, toStop = b.mode === 'stop';
       return `🛡️ ${title(l)} · no-wick against you\nAt ${b.at} · ${clock(e.time)}\n\n`

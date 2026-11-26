@@ -69,7 +69,7 @@ If the run fails with a TradingView error, GitHub's servers may be blocked from 
 
 | Message | Meaning |
 |---|---|
-| 🟢 BUY / 🔴 SELL | A valid no-wick formed: trade number, pair, trend, session, tap deadline and any warnings. Entry, stop and TP are left to you |
+| 🟢 BUY / 🔴 SELL | A valid no-wick formed: trade number, pair, trend, session and tap deadline. Entry, stop and TP are left to you. ⭐ A+ = fully aligned; 🔄 CHoCH = GER40 change-of-character setup |
 | 🧪 DA PLAY (experimental) | A counter-trend no-wick right after price held a **decision area** (see below). Only 1 BOS on the 15m against the 4H. Stop sits just beyond the DA. Tracked separately from normal setups |
 | ℹ️ | Good news on a setup, e.g. a decision area sits between entry and stop and protects it |
 | 🔼 upgraded | The 30m or 1H candle is also a no-wick. Tap window recalculated on that timeframe |
@@ -96,7 +96,7 @@ The bot finds Bard's decision areas by itself at every 15m close:
    - a **fake-out** (a close through, then straight back) widens the zone to cover it, up to 6 pips. Past 6 pips the zone is dropped.
    - zones closer than 15 pips: the one with more reactions wins
 
-DAs never block a normal alert. They add warnings: **entry inside a DA**, **selling near the bottom / buying near the top of the range** (between the DAs below and above), and **TP beyond a DA** (consider TP just before it).
+DAs never block a normal alert. They add warnings (recorded in the journal, not shown in alerts): **entry inside a DA**, **selling near the bottom / buying near the top of the range** (between the DAs below and above), and **TP beyond a DA** (consider TP just before it).
 
 **🧪 DA plays** are a setup the normal rules would skip **only because of the trend** (e.g. 15m bullish ×1 against a bearish 4H). The bot alerts it when price touched a DA in the last 8 15m candles without closing through it, then printed the no-wick. Expect few of them. They get their own number, so `#07TP` works as usual. The weekly recap and journal (`play_type = da`) keep them separate, so they never mix into your main numbers. To switch DA-play alerts off but keep tracking them silently, set `alertPlays: false` in `src/config.js`. The bot's DA levels come from the feed's tick volume, so they can sit a pip or two off TradingView's profile.
 
@@ -115,6 +115,7 @@ The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA, 15m), **GER40** (FOREX.com
 - **GER40** follows the same SAST hours as forex. FOREX.com closes it daily 23:05–00:00 Berlin time and from Friday 22:05 to Monday 00:00 Berlin time; those gaps don't trigger stale-data warnings.
 - **BTCUSD** trades 7 days a week, so it alerts on weekends too (same SAST hours and daily close). Weekend results appear in the following Friday's recap. cron-job.org must trigger runs on Saturday and Sunday for this.
 - Decision areas are off for GER40 and BTCUSD; they are tuned for forex on the 15m.
+- **GER40 change of character (🔄 CHoCH):** GER40 also alerts no-wicks in the direction of the first 5m BOS against the 1H, before the usual second BOS. The alert title carries `🔄 CHoCH` and the trend block says "against (change of character, 1 BOS)". Once a second BOS comes it's a normal 2-BOS setup. Forex and BTCUSD still need 2 BOS.
 - In the journal, `trend_15m`/`bos_15m` hold the symbol's own timeframe and `trend_4h`/`bos_4h` the timeframe it is checked against.
 
 ## Trading hours and trend rule
@@ -127,7 +128,7 @@ The bot watches **AUDUSD, GBPUSD and AUDJPY** (OANDA, 15m), **GER40** (FOREX.com
 
 - **Stop:** 1 pip beyond the latest swing high (sells) or swing low (buys), so the risk changes with the structure.
 - **Deeper pullback:** if an earlier no-wick in the same direction is still untapped, still inside its 9-candle window, and sits inside that stop, price will probably go there first. The stop then moves beyond the swing that protected that earlier no-wick, and the alert says so.
-- **Warnings never block an alert.** They flag things for you:
+- **Warnings never block an alert, and since 2026-11-26 they are no longer shown in alerts.** They are recorded silently in the journal's `warnings` column:
   - unfilled voids against the trade (a slow push of 5+ candles, or a fast one of 3+ candles covering 10+ pips)
   - untapped same-direction no-wicks on the stop side
   - conflicting no-wicks
@@ -149,7 +150,7 @@ Swipe-reply to any alert for the trade with `invalid` (or send `#05 invalid`). T
 
 Every 15m no-wick the bot sees is written to a monthly spreadsheet on the `bot-state` branch: `journal/2026-11.csv`, `journal/2026-12.csv`, and so on. That includes the ones it **skipped**, with the reason. Skipped ones are tracked silently (no alerts), so you can later see how they would have done. Journal files are never deleted.
 
-Each row has: number, whether it was alerted or skipped (and why), pair, timeframe, BUY/SELL, formation time (UTC and SAST), level, stop, alternative stop, TP, risk, 15m and 4H trend with BOS counts, session, warnings, upgrades, tap time and n/9, the bot's result (TP, SL, expired, unknown, no setup, plus whether news muted it), and your reported TP/SL/BE. Decision-area columns: `play_type` (normal / da), the nearest DA below and above, `range_pos` (where entry sits between them, 0–100%), `in_da` and `tp_beyond_da`.
+Each row has: number, whether it was alerted or skipped (and why), pair, timeframe, BUY/SELL, formation time (UTC and SAST), level, stop, alternative stop, TP, risk, 15m and 4H trend with BOS counts, session, warnings, upgrades, tap time and n/9, the bot's result (TP, SL, expired, unknown, no setup, plus whether news muted it), and your reported TP/SL/BE. Decision-area columns: `play_type` (normal / da / choch), the nearest DA below and above, `range_pos` (where entry sits between them, 0–100%), `in_da` and `tp_beyond_da`.
 
 A row appears once the setup finishes (TP, SL or expired) or when you report it.
 
