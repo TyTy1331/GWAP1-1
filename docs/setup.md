@@ -113,10 +113,11 @@ The bot watches **AUDUSD, GBPUSD, AUDJPY, AUDCAD and USDCAD** (OANDA, 15m; AUDCA
 |---|---|---|---|---|---|
 | AUDUSD, GBPUSD, AUDJPY, AUDCAD, USDCAD | 15m | 30m, 1H | 4H | pips (AUDJPY 0.01) | both currencies |
 | GER40 | 5m | 15m, 30m | 1H | points, thresholds ×4 | EUR, USD |
-| BTCUSD | 30m | 1H | 4H | dollars, thresholds ×50 | USD |
+| BTCUSD | 1H | none | 4H **and** 1D | dollars, thresholds ×85 | USD |
 
 - **GER40** follows the same SAST hours as forex. FOREX.com closes it daily 23:05–00:00 Berlin time and from Friday 22:05 to Monday 00:00 Berlin time; those gaps don't trigger stale-data warnings.
-- **BTCUSD** trades 7 days a week, so it alerts on weekends too (same SAST hours and daily close). Weekend results appear in the following Friday's recap. cron-job.org must trigger runs on Saturday and Sunday for this.
+- **BTCUSD** (since Nov 27, 2026) watches the **1H only**, and **every** 1H no-wick is sent with a verdict. **✅ Valid** means the 1H, 4H and 1D trends all point the trade's way, it formed inside your hours (05:00–22:00 SAST), away from red-folder news, and a stop exists. Otherwise it says **❌ Not valid** and why (e.g. "4H bullish, outside your hours"). The trend block marks each timeframe ✅ or ❌. Only valid ones get a trade number, report buttons, and tap/result messages; not-valid ones are tracked quietly for the journal (`trend_1d`, `bos_1d`). BTC 1H no-wicks are rare, about one every few days. It trades 7 days a week (same SAST hours and daily close), so weekend results appear in the following Friday's recap.
+- **Quiet hours:** on the forex weekend, and outside every session (22:00–05:00 SAST) when no forex or GER40 trade is open, only BTCUSD can alert. The bot then runs **once an hour**, on the first trigger from hh:01, right after the 1H candle closes. If that run fails, every following trigger (every 5 minutes) retries until one succeeds, then it goes back to hourly. Taps and results in quiet hours can arrive up to an hour late. Manual runs always run.
 - Decision areas are off for GER40 and BTCUSD; they are tuned for forex on the 15m.
 - **GER40 change of character (🔄 CHoCH):** GER40 also alerts no-wicks in the direction of the first 5m BOS against the 1H, before the usual second BOS. The alert title carries `🔄 CHoCH` and the trend block says "against (change of character, 1 BOS)". Once a second BOS comes it's a normal 2-BOS setup. Forex and BTCUSD still need 2 BOS.
 - In the journal, `trend_15m`/`bos_15m` hold the symbol's own timeframe and `trend_4h`/`bos_4h` the timeframe it is checked against.
@@ -125,7 +126,7 @@ The bot watches **AUDUSD, GBPUSD, AUDJPY, AUDCAD and USDCAD** (OANDA, 15m; AUDCA
 
 - **Hours:** **22:00–05:00 SAST is a no-trade zone.** No-wicks that form then, and taps that happen then, are not alerted; they are tracked quietly for the journal. The session name in an alert (Asia / London / New York) is only a label. Red-folder news mutes from 1 hour before to 1 hour after (Bard's rule; it was ±30 minutes until Nov 26, 2026).
 - **Trend:** with the 4H, 1 BOS on the 15m in the trade's direction is enough. Trading against the 4H needs 2 BOS in a row. Since Nov 26, 2026 **pullbacks** (with the 4H while the 15m has 1 BOS against) are not alerted, because Bard needs both trends to agree. They are still tracked silently, and the weekly rule tests show how they would have done. **GER40 keeps pullbacks** (alerts say "aligned (pullback: 1 BOS against)") as well as its 🔄 CHoCH setups.
-- **⭐ A+:** the alert title carries `⭐ A+` when the 15m and the 4H trend both point the trade's way (no pullback, not against the 4H). In the Nov 4–25 journal these won 65% (+0.29R a trade) vs 38% when against the 4H. The tag stays on the tap, result and break-even messages. GER40 and BTCUSD use their own timeframes (5m/1H, 30m/4H).
+- **⭐ A+:** the alert title carries `⭐ A+` when the 15m and the 4H trend both point the trade's way (no pullback, not against the 4H). In the Nov 4–25 journal these won 65% (+0.29R a trade) vs 38% when against the 4H. The tag stays on the tap, result and break-even messages. GER40 uses its own timeframes (5m/1H). On BTCUSD, A+ means the 1H, 4H and 1D all agree.
 
 ## How stops and warnings work
 

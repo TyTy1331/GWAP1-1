@@ -23,7 +23,8 @@ const side = (dir) => (dir === 'bull' ? 'BUY' : 'SELL');
 const dot = (dir) => (dir === 'bull' ? '🟢' : '🔴');
 const trend = (t) => (t.dir ? `${t.dir === 'bull' ? 'bullish' : 'bearish'} (${t.count} BOS)` : 'unclear');
 // A+: the internal and external trend both point the trade's way (journal Nov 4–25: 65% vs 38% when against).
-export const aPlus = (l) => l.internal?.dir === l.dir && l.external?.dir === l.dir;
+// BTCUSD also needs its second external trend (1D) to agree.
+export const aPlus = (l) => l.internal?.dir === l.dir && l.external?.dir === l.dir && (l.external2 === undefined || l.external2?.dir === l.dir);
 const title = (l) => `<b>${head(l)} ${TF_LABEL[l.tf]} ${side(l.dir)}${aPlus(l) ? ' ⭐ A+' : ''}${l.choch ? ' 🔄 CHoCH' : ''}</b>`;
 
 // A titled block, or nothing when it has no lines. Blocks are separated by a blank line.
@@ -44,7 +45,14 @@ export function formatEvent(e, ctx = {}) {
       const side = l.dir === 'bull' ? 'bullish' : 'bearish', against = l.htfAgainst;
       const rr = l.imb ? Math.round((Math.abs(l.setup.tp - l.level) / Math.abs(l.level - l.setup.stop)) * 10) / 10 : null;
       // Bard's checks: pre-entry when the no-wick is low in its leg, a higher-timeframe no-wick against, NY open.
-      const checks = [
+      // BTCUSD (verdict): every no-wick is sent; each timeframe gets ✅/❌ and the verdict says why.
+      const verdict = inst.verdict ? (l.shadow ? `❌ <b>Not valid</b>: ${esc(String(l.skipReason).replace(/^not valid: /, ''))}`
+        : `✅ <b>Valid</b>: ${[inst.tf, inst.ext, inst.ext2].map((tf) => TF_LABEL[tf]).join(', ')} all agree`) : null;
+      const mark = (t) => (t?.dir === l.dir ? ' ✅' : ' ❌');
+      const trends = inst.verdict
+        ? [[inst.tf, l.internal], [inst.ext, l.external], [inst.ext2, l.external2]].map(([tf, t]) => `${TF_LABEL[tf]}: ${trend(t ?? {})}${mark(t)}`)
+        : [`${TF_LABEL[inst.tf]}: ${trend(l.internal)}`, `${TF_LABEL[inst.ext]}: ${trend(l.external)} ${bias}`];
+      const checks = l.shadow ? [] : [
         ...(l.leg && l.leg.pos < 0.5 ? [`📍 Pre-entry: the no-wick sits near the start of its leg (${Math.round(l.leg.pos * 100)}%). Bard enters early here, around ${l.leg.price} (50% of the leg)`] : []),
         ...(against ? [`⚠️ Untapped ${TF_LABEL[against.tf]} ${against.dir === 'bull' ? 'bullish' : 'bearish'} no-wick against this trade (${clock(against.time)} candle, at ${against.level}): it can play out first`] : []),
         ...(l.nyOpen && !aPlus(l) ? ['⚠️ New York open: Bard only takes A+ setups here'] : []),
@@ -58,9 +66,10 @@ export function formatEvent(e, ctx = {}) {
           `${side[0].toUpperCase()}${side.slice(1)} no-wick · ${clock(l.candleOpen)} candle`,
           ...(da ? [`Held the decision area ${l.daZone.lo}–${l.daZone.hi}`] : []),
           ...(l.imb ? [`🌀 Unfilled imbalance right ahead at ${l.imb.from}–${l.imb.to}: TP at its far edge (${l.setup.tp}, ${rr}R)`] : []),
-          ...(l.choch ? [`🔄 Change of character setup: first ${TF_LABEL[inst.tf]} BOS against the ${TF_LABEL[inst.ext]}`] : [])].join('\n'),
+          ...(l.choch ? [`🔄 Change of character setup: first ${TF_LABEL[inst.tf]} BOS against the ${TF_LABEL[inst.ext]}`] : []),
+          ...(verdict ? [verdict] : [])].join('\n'),
         checks.join('\n'),
-        block('📊 <b>Trend</b>', [`${TF_LABEL[inst.tf]}: ${trend(l.internal)}`, `${TF_LABEL[inst.ext]}: ${trend(l.external)} ${bias}`]),
+        block('📊 <b>Trend</b>', trends),
         `🕒 ${esc(l.session)} session · tap window closes ${clock(l.deadline)}`,
         notes(l),
         block('📅 <b>News</b>', news),

@@ -217,14 +217,30 @@ test('GER40: no-wicks on the 5m, trend against the 1H', () => {
   assert.match(formatEvent(events[0], events[0].ctx), /GER40 5m BUY[\s\S]*5m: bullish[\s\S]*1H: bullish/);
 });
 
-test('BTCUSD: 30m no-wick against the 4H alerts on a Saturday', () => {
+test('BTCUSD: every 1H no-wick is sent with a verdict; valid only when 1H, 4H and 1D agree (Saturdays too)', () => {
   const pair = 'CRYPTO:BTCUSD', nw = utc('2026-11-07T09:00:00Z'); // Sat 11:00 SAST
-  const { base, ext } = trendOn(nw, 1800, 14400, 85000);
-  const state = freshState();
-  state.pairs[pair] = { last1m: nw + 1800, last15: nw };
-  const { events } = processPair(state, pair, { m1: [], m30: base, h1: [], h4: ext }, nw + 1860, noNews);
-  assert.deepEqual(events.map((e) => e.kind), ['formed']);
-  assert.match(formatEvent(events[0], events[0].ctx), /BTCUSD 30m BUY[\s\S]*30m: bullish[\s\S]*4H: bullish/);
+  const { base, ext } = trendOn(nw, 3600, 14400, 85000);
+  const daily = trendOn(nw, 3600, 86400, 85000).ext;
+  const run = (d1) => {
+    const state = freshState();
+    state.pairs[pair] = { last1m: nw + 3600, last15: nw };
+    const { events } = processPair(state, pair, { m1: [], h1: base, h4: ext, d1 }, nw + 3660, noNews);
+    assert.deepEqual(events.map((e) => e.kind), ['formed']);
+    return { e: events[0], text: formatEvent(events[0], events[0].ctx) };
+  };
+  const ok = run(daily);
+  assert.match(ok.text, /#01 BTCUSD 1H BUY[\s\S]*✅ <b>Valid<\/b>: 1H, 4H, 1D all agree[\s\S]*1H: bullish \(\d BOS\) ✅\n4H: bullish \(\d BOS\) ✅\n1D: bullish \(\d BOS\) ✅/, ok.text);
+  const bad = run([]); // no daily structure yet → unclear
+  assert.ok(bad.e.level.shadow && !bad.e.level.num, 'not valid: tracked silently, no trade number');
+  assert.match(bad.text, /<b>BTCUSD 1H BUY<\/b>[\s\S]*❌ <b>Not valid<\/b>: 1D unclear[\s\S]*1D: unclear ❌/, bad.text);
+});
+
+test('verdict reasons: hours, news, each disagreeing timeframe, and a missing stop', async () => {
+  const { verdict } = await import('../src/run.js');
+  const inst = { tf: 3600, ext: 14400, ext2: 86400 }, up = { dir: 'bull', count: 1 };
+  assert.equal(verdict({ dir: 'bull', inst, trends: [up, up, up], session: 'London', muted: false, setup: {} }), null);
+  assert.equal(verdict({ dir: 'bull', inst, trends: [up, { dir: 'bear', count: 2 }, up], session: null, muted: true, setup: null }),
+    'not valid: outside your hours, red-folder news, 4H bearish, no swing for a stop');
 });
 
 // Uptrend, then the first bearish BOS (a change of character), then a bearish no-wick; the external trend is still bullish.

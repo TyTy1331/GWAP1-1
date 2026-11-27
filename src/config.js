@@ -1,8 +1,8 @@
 // All tunable settings live here. Times are local market time in the given IANA zone.
-export const TF = { M1: 60, M5: 300, M15: 900, M30: 1800, H1: 3600, H4: 14400 };
-export const TF_LABEL = { 60: '1m', 300: '5m', 900: '15m', 1800: '30m', 3600: '1H', 14400: '4H' };
+export const TF = { M1: 60, M5: 300, M15: 900, M30: 1800, H1: 3600, H4: 14400, D1: 86400 };
+export const TF_LABEL = { 60: '1m', 300: '5m', 900: '15m', 1800: '30m', 3600: '1H', 14400: '4H', 86400: '1D' };
 // Key of each timeframe's candle list in the data passed to processPair.
-export const TF_KEY = { 60: 'm1', 300: 'm5', 900: 'm15', 1800: 'm30', 3600: 'h1', 14400: 'h4' };
+export const TF_KEY = { 60: 'm1', 300: 'm5', 900: 'm15', 1800: 'm30', 3600: 'h1', 14400: 'h4', 86400: 'd1' };
 
 export const config = {
   // AUDCAD and USDCAD added 2026-11-26: both are pairs Bard trades in his recaps.
@@ -16,7 +16,9 @@ export const config = {
   // choch: also alert no-wicks after the first internal BOS against the external trend (change of character).
   // pullback: also alert with the external trend while the internal has 1 BOS against. Not Bard's rule
   // (his videos, Nov 2026): kept for GER40 only, your choice. Elsewhere those setups are tracked silently.
-  // scale comes from typical candle size: forex 15m ~5 pips, GER40 5m ~23 pts, BTCUSD 30m ~$250 (Nov 2026).
+  // ext2: a second external trend that must agree too. verdict: alert every no-wick with a valid / not valid
+  // verdict (all trends agree, inside your hours, no news, a stop exists) instead of skipping invalid ones.
+  // scale comes from typical candle size: forex 15m ~5 pips, GER40 5m ~23 pts, BTCUSD 1H ~$437 (Nov 2026).
   instruments: {
     'OANDA:AUDJPY': { pip: 0.01 },
     'FOREXCOM:GER40': {
@@ -26,9 +28,10 @@ export const config = {
       dailyBreak: { zone: 'Europe/Berlin', start: '22:00', end: '24:00' },
       gapToleranceMinutes: 70,
     },
+    // Your choice (2026-11-27): 1H no-wicks only, every one sent with a verdict; valid when 1H, 4H and 1D agree.
     'CRYPTO:BTCUSD': {
-      pip: 1, scale: 50, unit: 'USD', currencies: ['USD'], da: false, always: true,
-      tf: TF.M30, ups: [TF.H1], ext: TF.H4,
+      pip: 1, scale: 85, unit: 'USD', currencies: ['USD'], da: false, always: true, verdict: true,
+      tf: TF.H1, ups: [], ext: TF.H4, ext2: TF.D1,
     },
   },
   displayZone: 'Africa/Johannesburg',
@@ -111,5 +114,6 @@ export function instrument(pair) {
     dailyBreak: i.dailyBreak ?? null,
     tf: i.tf ?? TF.M15, ups: i.ups ?? [TF.M30, TF.H1], ext: i.ext ?? TF.H4,
     always: Boolean(i.always), da: i.da ?? true, choch: Boolean(i.choch), pullback: Boolean(i.pullback),
+    ext2: i.ext2 ?? null, verdict: Boolean(i.verdict),
   };
 }

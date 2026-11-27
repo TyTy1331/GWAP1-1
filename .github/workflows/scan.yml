@@ -34,16 +34,30 @@ jobs:
           git clone -q --depth 1 --branch bot-state "https://github.com/${GITHUB_REPOSITORY}.git" state \
             || { mkdir -p state && git -C state init -q -b bot-state; }
 
+      # Quiet hours (forex weekend or outside every session, no forex/GER40 trade open; only BTCUSD 1H can alert):
+      # run once an hour from hh:01, and on every later trigger until that hour's run succeeds. Manual runs always run.
+      # Uses the runner's built-in Node; scripts/due.js needs no npm packages.
+      - name: Check if a run is due
+        id: due
+        env:
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' && inputs.source != 'cron' }}
+        run: |
+          if [ "$MANUAL" = "true" ] || node scripts/due.js state/state.json; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
+
       - uses: actions/setup-node@v5
+        if: ${{ steps.due.outputs.run == 'true' }}
         with:
           node-version: 22
           cache: npm
 
       - run: npm ci --ignore-scripts
+        if: ${{ steps.due.outputs.run == 'true' }}
 
       # Stays awake ~4 minutes and checks every minute, so alerts and button replies arrive within
       # about a minute instead of 5–15. State is pushed after every pass, so a cancelled job loses nothing.
+      # In quiet hours it stops after the first successful pass.
       - name: Run bot
+        if: ${{ steps.due.outputs.run == 'true' }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -58,13 +72,14 @@ jobs:
             node src/run.js || rc=1
             bash scripts/save-state.sh || rc=1
             [ $SECONDS -ge $end ] && break
+            node scripts/due.js state/state.json || break # quiet hours: this hour is done
             export RUN_SOURCE=cron # "Manual run OK" only on the first pass
             sleep $(( (65 - $(date +%s) % 60) % 60 + 1 )) # just after the next 1m candle closes
           done
           exit $rc
 
       - name: Save state
-        if: ${{ failure() }}
+        if: ${{ failure() && steps.due.outputs.run == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/save-state.sh

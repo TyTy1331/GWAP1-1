@@ -18,6 +18,15 @@ const nextNum = (state) => { const n = state.nextNum ?? 1; state.nextNum = n + 1
 
 const floorTo = (t, tf) => Math.floor(t / tf) * tf;
 
+// BTCUSD's verdict: valid only inside your hours, away from red-folder news, with a stop, and when the no-wick's
+// own timeframe and both external trends (4H, 1D) point the trade's way. Returns null (valid) or the reason.
+export function verdict({ dir, inst, trends, session, muted, setup }) {
+  const word = (t) => (t?.dir ? (t.dir === 'bull' ? 'bullish' : 'bearish') : 'unclear');
+  const off = [inst.tf, inst.ext, inst.ext2].map((tf, k) => [tf, trends[k]]).filter(([tf, t]) => tf && t?.dir !== dir).map(([tf, t]) => `${TF_LABEL[tf]} ${word(t)}`);
+  const why = [...(session ? [] : ['outside your hours']), ...(muted ? ['red-folder news'] : []), ...off, ...(setup ? [] : ['no swing for a stop'])];
+  return why.length ? `not valid: ${why.join(', ')}` : null;
+}
+
 function warnOnce(state, key, now, text) {
   if (state.throttle[key] && now - state.throttle[key] < 3600) return;
   state.throttle[key] = now;
@@ -48,6 +57,7 @@ export function processPair(state, pair, data, until, news) {
   items.sort((a, b) => a.t - b.t || a.prio - b.prio);
 
   const aBase = base && analyze(base, inst.tf), aExt = ext && analyze(ext, inst.ext);
+  const ext2 = inst.ext2 && data[TF_KEY[inst.ext2]], aExt2 = ext2 && analyze(ext2, inst.ext2);
   const aHigher = Object.fromEntries(inst.ups.map((tf) => [tf, data[TF_KEY[tf]] && analyze(data[TF_KEY[tf]], tf)]));
   const upToHere = (list, i) => list.slice(Math.max(0, i - config.structureBars + 1), i + 1);
   const daCache = new Map();
@@ -76,7 +86,9 @@ export function processPair(state, pair, data, until, news) {
         return s && applyDA(s, dir, das);
       };
       let setup = build();
-      const trendOnly = session && !muted && !isValid(dir, internal, external, inst.pullback);
+      const external2 = aExt2 ? trendAt(aExt2.bos, it.t) : null;
+      // Verdict instruments (BTCUSD) skip the special plays: every no-wick is alerted with valid / not valid.
+      const trendOnly = !inst.verdict && session && !muted && !isValid(dir, internal, external, inst.pullback);
       // DA play (experimental): counter-trend, but 1 BOS on the 15m and a held decision area behind entry.
       const zone = trendOnly && internal.dir === dir ? daPlayZone(dir, candles, das) : null;
       if (zone) setup = build(dir === 'bull' ? zone.lo : zone.hi);
@@ -94,7 +106,8 @@ export function processPair(state, pair, data, until, news) {
       // Change of character (GER40): the first internal BOS against the external trend, traded in the new direction.
       const choch = counter && !imb && inst.choch;
       const pullback = trendOnly && isPullback(dir, internal, external);
-      const reason = !session ? 'outside session'
+      const reason = inst.verdict ? verdict({ dir, inst, trends: [internal, external, external2], session, muted, setup })
+        : !session ? 'outside session'
         : muted ? 'red-folder news'
         : zone ? (config.da.alertPlays ? null : 'DA play (alerts off)')
         : imb ? null
@@ -107,6 +120,7 @@ export function processPair(state, pair, data, until, news) {
       if (zone) Object.assign(level, { playType: 'da', daZone: zone });
       if (imb) level.imb = imb;
       if (choch) level.choch = true;
+      if (inst.ext2) level.external2 = external2;
       // Bard's extra checks, shown on the alert: pre-entry when the no-wick is low in its leg, an untapped
       // higher-timeframe no-wick against the trade, and the New York open.
       const htf = inst.ups.at(-1);
@@ -118,7 +132,7 @@ export function processPair(state, pair, data, until, news) {
       if (reason) {
         skipped.push({ time: it.t, dir, level: it.c.open, reason });
         Object.assign(level, { shadow: true, skipReason: reason, ...(setup ? {} : { status: 'nosetup' }) });
-        continue;
+        if (!inst.verdict) continue; // not-valid BTC no-wicks are still sent, with the reason, then tracked silently
       }
       events.push({ kind: 'formed', id: `${level.id}:formed`, level, time: it.t,
         ctx: { upcoming: upcomingNews(news.events, pair, it.t), newsUnavailable: !news.ok } });
@@ -198,7 +212,7 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
         latestData = Math.max(latestData ?? 0, m1.at(-1).time + 60);
         const data = { m1 };
         if (floorTo(pUntil, inst.tf) > ps.last15) {
-          for (const tf of new Set([inst.tf, ...inst.ups, inst.ext, ...(inst.da ? [TF.M30] : [])])) data[TF_KEY[tf]] = await get(tf, 500);
+          for (const tf of new Set([inst.tf, ...inst.ups, inst.ext, ...(inst.ext2 ? [inst.ext2] : []), ...(inst.da ? [TF.M30] : [])])) data[TF_KEY[tf]] = await get(tf, 500);
         }
         const { events, skipped } = processPair(state, pair, data, pUntil, state.news);
         for (const e of events) enqueue(state, e.id, formatEvent(e, e.ctx), buttons(e));
@@ -263,6 +277,7 @@ export async function runOnce({ now = Math.floor(Date.now() / 1000), env = proce
       const n = syncJournal(state, join(dirname(statePath), 'journal'));
       if (n) log(`Journal: ${n} row(s) written`);
     } catch (e) { log(`Journal write failed: ${e.message}`); }
+    if (!exitCode) state.lastOk = now; // the hourly quiet-hours check counts only successful runs
     saveState(statePath, state); // always, so sent IDs and progress survive a failed run
   }
   log(`Done. outbox=${state.outbox.length} levels=${state.levels.filter((l) => l.status === 'active' || l.status === 'tracking').length}`);

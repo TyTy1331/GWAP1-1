@@ -9,6 +9,7 @@ const USAGE = 'Ask about a trade or a candle:\n<code>/why #175</code>\n<code>/wh
 // Which trend rule let the setup through, or stopped it. Mirrors isValid, the DA play and CHoCH.
 function rule(l, inst) {
   const i = l.internal ?? {}, e = l.external ?? {}, iL = TF_LABEL[inst.tf], eL = TF_LABEL[inst.ext];
+  if (inst.verdict) return `Valid only when the ${[inst.tf, inst.ext, inst.ext2].map((tf) => TF_LABEL[tf]).join(', ')} all point the trade's way.`;
   if (l.playType === 'da') return `DA play: 1 ${iL} BOS against the ${eL}, with a held decision area behind the entry.`;
   if (l.imb) return `Imbalance play: 1 ${iL} BOS against the ${eL}, with an unfilled imbalance right ahead (TP at its far edge).`;
   if (l.choch) return `Change of character: the first ${iL} BOS against the ${eL}, traded in the new direction.`;
@@ -57,8 +58,9 @@ function explain(l) {
   const inst = instrument(l.pair);
   return [
     `🔎 <b>${tag(l.num) ? `${tag(l.num)} ` : ''}${esc(name(l.pair))} ${TF_LABEL[inst.tf]} ${l.dir === 'bull' ? 'BUY' : 'SELL'}</b> · ${clock(l.candleOpen)} candle`,
-    l.shadow ? `⏭ Not alerted: ${skipText(l.skipReason ?? 'skipped')}` : '✅ Alerted',
-    `📊 ${TF_LABEL[inst.tf]} ${trend(l.internal)} · ${TF_LABEL[inst.ext]} ${trend(l.external)}`,
+    inst.verdict ? (l.shadow ? `❌ Sent as not valid: ${String(l.skipReason).replace(/^not valid: /, '')}.` : '✅ Sent as valid')
+      : l.shadow ? `⏭ Not alerted: ${skipText(l.skipReason ?? 'skipped')}` : '✅ Alerted',
+    `📊 ${TF_LABEL[inst.tf]} ${trend(l.internal)} · ${TF_LABEL[inst.ext]} ${trend(l.external)}${inst.ext2 ? ` · ${TF_LABEL[inst.ext2]} ${trend(l.external2)}` : ''}`,
     `📏 ${rule(l, inst)}`,
     `🕒 Session: ${esc(l.session)}${l.upgrades.length ? ` · upgraded to ${l.upgrades.map((tf) => TF_LABEL[tf]).join(', ')}` : ''}`,
     `➡️ ${outcome(l)}`,
